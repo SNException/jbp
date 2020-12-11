@@ -101,6 +101,8 @@ public final class jbp {
             out.write(data.getBytes(StandardCharsets.UTF_8));
             out.flush();
         } catch (final IOException ex) {
+            // @Todo: Format the string correctly
+            // @Todo: If the file name contains generic ('<', '>') then this will always fail!
             System.err.printf("Failed to write file '%s'\n", file);
         }
     }
@@ -286,7 +288,7 @@ public final class jbp {
         } else {
             try {
                 // @Todo: Check result in case of error
-                System.out.println("\t-> No java packages are used.");
+                System.out.println("\t-> No java packages are used.\n");
                 execShellCommand(null, new File("build/classes"), "jar", "cfme", "../Program.jar", "../Manifest.txt", entryPoint, "*.class");
             } catch (final IOException ex) {
                buildFail("->\t Failed to create executable.");
@@ -363,13 +365,6 @@ public final class jbp {
                         }
 
                     }
-
-                    /*
-                    if (line.contains("Method") || line.contains("InterfaceMethod")) // @Robustness: Check for instruction invoke...
-                        numberOfMethods += 1;
-                    else if (line.contains("Field")) // @Bug: we should only check for putfield to know how many fields are in memory
-                        numberOfFields += 1;
-                    */
                 }
             }
 
@@ -540,7 +535,7 @@ public final class jbp {
             }
         } else {
             // this is fine because we could have a library which normally does not have an entry point
-            System.out.printf("\t-> No entry point found.");
+            System.out.printf("\t-> No entry point found.\n");
             entryPoint = "--NoMainFound--";
         }
     }
@@ -569,21 +564,6 @@ public final class jbp {
             }
             assert files != null;
 
-            for (int i = 0, l = files.length; i < l; ++i) {
-                final File file = files[i];
-                if (file.delete()) {
-                    deletionCounter += 1;
-                }
-            }
-
-            // @Hack: Second try for directories; they are empty now.
-            File[] files2 = null;
-            try {
-                files2 = listAllFiles(cwd);
-            } catch (final IOException ex) {
-                buildFail("\t-> Failed to clean the build directory.");
-                assert false;
-            }
             for (int i = 0, l = files.length; i < l; ++i) {
                 final File file = files[i];
                 if (file.delete()) {
