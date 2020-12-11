@@ -594,7 +594,7 @@ public final class jbp {
         assert args.length == 0;
 
         System.out.println("===========");
-        System.out.println("jbp v0.1.0");
+        System.out.println("jbp v0.2.0");
         System.out.println("===========");
         System.out.println();
         startNanoTime = System.nanoTime();
