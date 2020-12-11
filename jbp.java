@@ -285,7 +285,7 @@ public final class jbp {
         } else {
             try {
                 // @Todo: Check result in case of error
-                System.out.println("\t-> No java packages are used.\n");
+                System.out.println("\t-> No java packages are used.");
                 execShellCommand(null, new File("build/classes"), "jar", "cfme", "../Program.jar", "../Manifest.txt", entryPoint, "*.class");
             } catch (final IOException ex) {
                buildFail("->\t Failed to create executable.");
@@ -518,7 +518,7 @@ public final class jbp {
                 entryPoint = file.getName().split("\\.")[0];
                 numberOfEntryPoints += 1;
             }
-            loc += locBuffer.toString().split(System.lineSeparator()).length;
+            loc += locBuffer.toString().split("\n").length;
         }
 
         writeToFile("sources.txt", sbuffer.toString());
