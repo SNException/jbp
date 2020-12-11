@@ -54,6 +54,9 @@ public final class jbp {
     private static void buildFail(final String reason) {
         assert reason != null;
 
+        // @Hack: We might failed the build and still have this file
+        new File("sources.txt").delete();
+
         System.out.println(reason);
         System.out.println();
         System.out.println("BUILD FAILED");
@@ -437,15 +440,18 @@ public final class jbp {
                 }
             }
             String result = null;
-            if (classpath.toString().isEmpty()) {
-                result = execShellCommand(null, null, "javac", "@sources.txt", "-g", "-d", "build/classes");
-            } else {
-                result = execShellCommand(null, null, "javac", "-classpath", classpath.toString(), "@sources.txt", "-g", "-d", "build/classes");
+
+            // For now we print a maximum number of 5 errors (-Xmaxerrs 5)
+            // We also disable warning (-nowarn) because they are hardly every useful (execpt deprecated warnings)
+            {
+                if (classpath.toString().isEmpty()) { // we have NO libraries
+                    result = execShellCommand(null, null, "javac", "@sources.txt", "-Xdiags:verbose", "-Xlint:deprecation", "-Xmaxerrs", "5", "-nowarn", "-g", "-d", "build/classes");
+                } else { // we have libraries; need to specify classpath now
+                    result = execShellCommand(null, null, "javac", "-classpath", classpath.toString(), "@sources.txt", "-Xdiags:verbose", "-Xlint:deprecation", "-Xmaxerrs", "5", "-nowarn", "-g", "-d", "build/classes");
+                }
             }
             assert result != null;
 
-            // @TODO: Perhaps it would be more readable if we only display N number of errors
-            // and then exit? Or does that make some errors 'unsolvable' ?
             // @Speed @Robustness: Check for exit value instead of doing a string check!
             if (result.contains("error")) {
                 System.out.println("\t-> COMPILATION ERROR");
@@ -456,6 +462,10 @@ public final class jbp {
                 System.out.println(result);
                 System.out.println("############################");
                 System.out.println("BUILD FAILED");
+
+                // @Hack: We might failed the build and still have this file
+                new File("sources.txt").delete();
+
                 System.exit(-1);
             } else {
                 try {

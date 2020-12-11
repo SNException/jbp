@@ -1,6 +1,6 @@
 # jbp
 
-jbp (just build please) is as the name suggest a build tool. It is designed to
+jbp (just build please) is as the name suggests a build tool. It is designed to
 compile java projects in an easy way that just works.
 
 When working with Java you are usally forced to use a build tool because
@@ -14,6 +14,8 @@ around the tools inside your JDK (javac, javap and jar).
 What I also wanted is some additional information about my project especially regarding the emitted bytecode.
 That is why this tool will generate .bytecode files which can immediately be read by just opening them in a
 text editor.
+
+This program has been build with OpenJDK 11 and has been tested only on Windows 10.
 
 ## How to use
 
