@@ -104,7 +104,6 @@ public final class jbp {
             out.write(data.getBytes(StandardCharsets.UTF_8));
             out.flush();
         } catch (final IOException ex) {
-            // @Todo: If the file name contains generic ('<', '>') then this will always fail!
             System.err.printf("\t-> Failed to write file '%s'\n", file);
         }
     }
