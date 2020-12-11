@@ -35,7 +35,7 @@ To be a bit more precise it will do the following things for you:
 3. Calls 'javap' to generate readable bytecode files for easier debugging (build/bytecode)
 4. Builds the executable (.jar) (build/release)
 
-When you have dependecies you just need to create a 'lib' directory inside your project root folder.
+When you have dependecies you just need to create a 'libs' directory inside your project root folder.
 'jbp' will add them to the classpath and move them into the 'build/release' directory so your .jar will
 find it when being executed.
 
