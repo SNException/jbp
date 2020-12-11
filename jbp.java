@@ -487,7 +487,7 @@ public final class jbp {
         System.out.println("> Analyzing your source tree...");
         final File src = new File("src");
         if (!src.exists()) {
-            buildFail("\t-> No src directory found.");
+            buildFail("\t-> No src directory found. Please create one.");
             assert false;
         }
 
