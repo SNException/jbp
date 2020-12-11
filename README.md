@@ -39,6 +39,9 @@ When you have dependecies you just need to create a 'lib' directory inside your 
 'jbp' will add them to the classpath and move them into the 'build/release' directory so your .jar will
 find it when being executed.
 
+In case you have other resources (like images or config files) you can create a 'res' directory and put them
+in there.
+
 'jbp' will always clean the build directory and will NOT do any incremental build. The reason for that is that I have been
 screwed many times by incremental builds in the past where I was not running the most recent version.
 Therefore this tool will make a fresh build from scratch everytime so you can be sure there isn't any garbage left from

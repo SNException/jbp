@@ -107,7 +107,7 @@ public final class jbp {
             out.write(data.getBytes(StandardCharsets.UTF_8));
             out.flush();
         } catch (final IOException ex) {
-            System.err.printf("\t-> Failed to write file '%s'\n", file);
+            System.out.printf("\t-> Failed to write file '%s'\n", file);
         }
     }
 
@@ -124,17 +124,16 @@ public final class jbp {
                 buffer.append(new String(chunk, 0, readBytes, StandardCharsets.UTF_8));
             }
         } catch (final IOException ex) {
-            System.err.printf("Failed to read file %s", file.getName());
+            System.out.printf("Failed to read file %s", file.getName());
         }
     }
 
     private static void deleteSourcesFiles() {
-        if (Files.exists(Paths.get("sources.txt"))) {
-            try {
-                Files.delete(Paths.get("sources.txt")); // @Todo: Use file.delete()?
-            } catch (final IOException ex) {
-                System.err.println();
-                System.err.println("Failed to delete sources.txt file.");
+        final File sources = new File("sources.txt");
+        if (sources.exists()) {
+            if (!sources.delete()) {
+                System.out.println();
+                System.out.println("Failed to delete sources.txt file.");
             }
         }
     }
@@ -191,6 +190,32 @@ public final class jbp {
         // @Robustness:
         new File("build/Manifest.txt").delete();
         new File("build/Program.jar").delete();
+
+        // resource handling @Incomplete: Directory structure will not get copied!!!!!!
+        final File res = new File("res");
+
+        if (res.exists()) {
+            final File resTarget = new File("build/release/res");
+            if (!resTarget.mkdir()) {
+                buildFail("\t-> Failed to create resource directory for the release.");
+                assert false;
+            }
+            try {
+                final File[] resFiles = listAllFiles(new File("res"));
+                for (int i = 0, l = resFiles.length; i < l; ++i) {
+                    final File resFile = resFiles[i];
+                    if (resFile.isDirectory())
+                        continue;
+                    Files.copy(resFile.toPath(), new File("build/release/res/" + resFile.getName()).toPath(), StandardCopyOption.REPLACE_EXISTING);
+                }
+                System.out.println("\t-> Copied all resources to the release.");
+            } catch (final IOException ex) {
+                buildFail("\t-> Failed to all copy resources.");
+                assert false;
+            }
+        } else {
+            System.out.println("\t-> Program does not use any resource files.");
+        }
 
         System.out.println("\t-> Package created successfully.");
     }
@@ -263,12 +288,9 @@ public final class jbp {
                 }
                 assert entryPointFile != null;
                 args.add(entryPointFile.getPath().replace("build\\", "").replace("classes\\", "").replace(".class", "").replace("\\", "."));
-                // args.add("foo.Main");
             }
 
             // classpath
-            // args.add("foo/Main.class");
-            // args.add("foo/Foo.class");
             for (int i = 0, l = classes.length; i < l; ++i) {
                 final File file = classes[i];
                 if (!file.isDirectory()) {
@@ -404,10 +426,10 @@ public final class jbp {
             System.out.printf("\t-> Total of %d fields.\n", numberOfFields);
             System.out.printf("\t-> Total of %d 'new' calls (likely resulting in heap allocations).\n", numberOfNewCalls);
         } catch (final IOException ex) {
-            System.err.println("\t-> Failed to generate readable bytecode files.");
+            System.out.println("\t-> Failed to generate readable bytecode files.");
         } finally {
             if (!out.delete()) {
-                System.err.println("\t-> Failed to delete bytecode_tmp.txt file.");
+                System.out.println("\t-> Failed to delete bytecode_tmp.txt file.");
             }
         }
     }
@@ -594,7 +616,7 @@ public final class jbp {
         assert args.length == 0;
 
         System.out.println("===========");
-        System.out.println("jbp v0.2.0");
+        System.out.println("jbp v0.3.0");
         System.out.println("===========");
         System.out.println();
         startNanoTime = System.nanoTime();

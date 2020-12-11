@@ -1,6 +1,9 @@
 CHANGELOG
 ---------
 
+0.3.0
+- Resource files are now partially supported (no directory structure yet)
+
 0.2.0
 - Bugfix when cleaning directories; removed the deletion of the build directories itself
 - Lines of code where not correctly counted due to incorrect line separator
