@@ -93,17 +93,19 @@ public final class jbp {
         }
     }
 
-    private static void writeToFile(final String file, final String data) {
+    private static void writeToFile(String file, final String data) {
         assert file != null;
         assert data != null;
+
+        // remove illegal characters, which can occur when having a file which uses generics
+        file = file.replace("<", "").replace(">", "");
 
         try (final OutputStream out = new FileOutputStream(new File(file))) {
             out.write(data.getBytes(StandardCharsets.UTF_8));
             out.flush();
         } catch (final IOException ex) {
-            // @Todo: Format the string correctly
             // @Todo: If the file name contains generic ('<', '>') then this will always fail!
-            System.err.printf("Failed to write file '%s'\n", file);
+            System.err.printf("\t-> Failed to write file '%s'\n", file);
         }
     }
 
@@ -215,10 +217,6 @@ public final class jbp {
 
         mfData.append("Created-By: jbp").append(System.lineSeparator()); // @Incomplete: current java version
         writeToFile("build/Manifest.txt", mfData.toString()); // @Todo: Delete manifest again?
-        if (!new File("build/Manifest.txt").exists()) {
-            buildFail("\t-> Failed to write manifest file.");
-            assert false;
-        }
 
         boolean usesPackages = false;
         {
