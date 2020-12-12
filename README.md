@@ -47,6 +47,11 @@ screwed many times by incremental builds in the past where I was not running the
 Therefore this tool will make a fresh build from scratch everytime so you can be sure there isn't any garbage left from
 the previous build.
 
+If you want to run/test your program, a nice way is to execute the following command sequence:
+```
+pushd build\release && java -jar Program.jar && popd
+```
+
 **(NOTE: This program is still alpha software, so it might break for stupid reasons.)**
 
 ## License
