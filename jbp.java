@@ -218,6 +218,7 @@ public final class jbp {
             System.out.println("\t-> Program does not use any resource files.");
         }
 
+        // @Todo: Print entire package size
         System.out.println("\t-> Package created successfully.");
     }
 
