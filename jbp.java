@@ -158,7 +158,7 @@ public final class jbp {
 
         final File libs = new File("libs");
         if (!libs.exists()) {
-            // done...
+            System.out.println("\t-> Your program does not use any libraries.");
         } else {
             final File dependencies = new File("build/release/libs");
             if (!dependencies.exists()) {
@@ -197,9 +197,11 @@ public final class jbp {
 
         if (res.exists()) {
             final File resTarget = new File("build/release/res");
-            if (!resTarget.mkdir()) {
-                buildFail("\t-> Failed to create resource directory for the release.");
-                assert false;
+            if (!resTarget.exists()) {
+                if (!resTarget.mkdir()) {
+                    buildFail("\t-> Failed to create resource directory for the release.");
+                    assert false;
+                }
             }
             try {
                 final File[] resFiles = listAllFiles(new File("res"));
@@ -218,8 +220,13 @@ public final class jbp {
             System.out.println("\t-> Program does not use any resource files.");
         }
 
-        // @Todo: Print entire package size
-        System.out.println("\t-> Package created successfully.");
+        try {
+            final long sizeOfReleaseInBytes = Files.walk(release.toPath()).mapToLong(p -> p.toFile().length()).sum();
+            System.out.printf("\t-> The full size of your release is %.3f %s\n", sizeOfReleaseInBytes / 1024.0f, "kb.");
+        } catch (final IOException ex) {
+            System.out.println("\t -> Failed to calculate size of your release.");
+            // lets not failed the entire build though, that seems dumb.
+        }
     }
 
     private static void createExecutable() {
@@ -244,8 +251,8 @@ public final class jbp {
             mfData.append("Class-Path: " + classpath.toString()).append(System.lineSeparator());
         }
 
-        mfData.append("Created-By: jbp").append(System.lineSeparator()); // @Incomplete: current java version
-        writeToFile("build/Manifest.txt", mfData.toString()); // @Todo: Delete manifest again?
+        mfData.append("Created-By: jbp").append(System.lineSeparator()); // @Incomplete: add current java version
+        writeToFile("build/Manifest.txt", mfData.toString());
 
         boolean usesPackages = false;
         {
@@ -297,7 +304,6 @@ public final class jbp {
                 final File file = classes[i];
                 if (!file.isDirectory()) {
                     args.add(file.getPath().replace("build\\", "").replace("classes\\", ""));
-                    // System.out.println(file.getPath().replace("build\\", "").replace("classes\\", ""));
                 }
             }
 
@@ -320,8 +326,13 @@ public final class jbp {
             }
         }
 
-        // @Todo: check if zero
-        System.out.printf("\t-> Size of executable is %.3f %s\n", new File("build/Program.jar").length() / 1024.0f, "kb.");
+        final File program = new File("build/Program.jar");
+        if (program.length() == 0) {
+            buildFail("\t-> Failed to create executable.");
+            assert false;
+        }
+
+        System.out.printf("\t-> Size of executable is %.3f %s\n", program.length() / 1024.0f, "kb.");
     }
 
     // @Robustness
@@ -371,10 +382,10 @@ public final class jbp {
                 for (int i = 0, l = lines.length; i < l; ++i) {
                     final String line = lines[i];
                     if (line.contains(":") && !line.equalsIgnoreCase("Code") && !line.equalsIgnoreCase("table")) { // @Robustness
-                        // @Bug: There are still some wrong values here like just number!
+                        // @Bug: There are still some wrong values here; CHECK!
                         numberOfByteCodeInstructions += 1;
                         final String stripedLine = line.strip();
-                        if (!stripedLine.contains("Code:")) { // @Ugh
+                        if (!stripedLine.contains("Code:")) {
                             final String[] arr = line.strip().split(" ");
                             if (arr.length > 1) {
                                 final String instruction = arr[1];
@@ -632,7 +643,7 @@ public final class jbp {
         }
 
         System.out.println("===========");
-        System.out.println("jbp v0.4.0");
+        System.out.println("jbp v0.5.0");
         System.out.println("===========");
         System.out.println();
         startNanoTime = System.nanoTime();

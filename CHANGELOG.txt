@@ -1,6 +1,12 @@
 CHANGELOG
 ---------
 
+0.5.0
+- Bugfix: Resources did not copied every 2nd build due to directory being still present
+- Additional error messages in case release could not be created
+- Now the entire size of your release will be calculated at the end (instead of just the executable)
+- When you do not use any libraries corresponding message will be printed
+
 0.4.0
 - Now we can specify whether we want to compile our program with or without debug information by using
 either '--debug' or '--release' when running the build. When you don't specify any arguments your
