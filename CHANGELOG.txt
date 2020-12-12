@@ -1,6 +1,11 @@
 CHANGELOG
 ---------
 
+0.4.0
+- Now we can specify whether we want to compile our program with or without debug information by using
+either '--debug' or '--release' when running the build. When you don't specify any arguments your
+program will compile with debug information.
+
 0.3.0
 - Resource files are now partially supported (no directory structure yet)
 

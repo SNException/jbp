@@ -1,5 +1,7 @@
 # jbp
 
+**(NOTE: This program is still alpha software, so it might break for stupid reasons.)**
+
 jbp (just build please) is as the name suggests a build tool. It is designed to
 compile java projects in an easy way that just works.
 
@@ -28,31 +30,23 @@ That is all. After that your project will build.
 ![output](image.PNG)
 
 
-To be a bit more precise it will do the following things for you:
-
-1. Create a build directory (or clean already existing one)
-2. Compile all the .java files inside the 'src' directory (build/classes)
-3. Calls 'javap' to generate readable bytecode files for easier debugging (build/bytecode)
-4. Builds the executable (.jar) (build/release)
-
-When you have dependecies you just need to create a 'libs' directory inside your project root folder.
-'jbp' will add them to the classpath and move them into the 'build/release' directory so your .jar will
-find it when being executed.
-
-In case you have other resources (like images or config files) you can create a 'res' directory and put them
-in there.
-
-'jbp' will always clean the build directory and will NOT do any incremental build. The reason for that is that I have been
-screwed many times by incremental builds in the past where I was not running the most recent version.
-Therefore this tool will make a fresh build from scratch everytime so you can be sure there isn't any garbage left from
-the previous build.
+You can also specify whether you want to include debug information when compiling
+by either using '--debug' or '--release'. If you omit it debug information will
+be included.
 
 If you want to run/test your program, a nice way is to execute the following command sequence:
 ```
 pushd build\release && java -jar Program.jar && popd
 ```
 
-**(NOTE: This program is still alpha software, so it might break for stupid reasons.)**
+If you wish to compile with libraries, simply add a 'libs' directory in your root folder and put
+all your libraries in there.
+If you have other resource files (like images or config files) simply create a 'res' directory.
+
+'jbp' will always clean the build directory and will NOT do any incremental build. The reason for that is that I have been
+screwed many times by incremental builds in the past where I was not running the most recent version.
+Therefore this tool will make a fresh build from scratch everytime so you can be sure there isn't any garbage left from
+the previous build.
 
 ## License
 

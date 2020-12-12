@@ -33,6 +33,7 @@ public final class jbp {
 
     private static long startNanoTime;
     private static String entryPoint = null;
+    private static boolean compileWithDebugInfo = true;
 
     private static File[] listAllFiles(final File dir) throws IOException {
         assert dir != null;
@@ -436,7 +437,7 @@ public final class jbp {
 
     private static void createClassFiles() {
         try {
-            System.out.println("> Parsing and emitting bytecode instructions...");
+            System.out.printf("> Parsing and emitting bytecode instructions (%s)...\n", compileWithDebugInfo ? "debug mode" : "release mode");
 
             final char classpathSeparator = System.getProperty("os.name").toLowerCase().contains("win") ? ';' : ':';
             int numberOfClassFiles = 0;
@@ -466,10 +467,11 @@ public final class jbp {
             // For now we print a maximum number of 5 errors (-Xmaxerrs 5)
             // We also disable warning (-nowarn) because they are hardly every useful (execpt deprecated warnings)
             {
+                final String debugFlag = compileWithDebugInfo ? "-g" : "-g:none";
                 if (classpath.toString().isEmpty()) { // we have NO libraries
-                    result = execShellCommand(null, null, "javac", "@sources.txt", "-Xdiags:verbose", "-Xlint:deprecation", "-Xmaxerrs", "5", "-nowarn", "-g", "-d", "build/classes");
+                    result = execShellCommand(null, null, "javac", "@sources.txt", "-Xdiags:verbose", "-Xlint:deprecation", "-Xmaxerrs", "5", "-nowarn", debugFlag, "-d", "build/classes");
                 } else { // we have libraries; need to specify classpath now
-                    result = execShellCommand(null, null, "javac", "-classpath", classpath.toString(), "@sources.txt", "-Xdiags:verbose", "-Xlint:deprecation", "-Xmaxerrs", "5", "-nowarn", "-g", "-d", "build/classes");
+                    result = execShellCommand(null, null, "javac", "-classpath", classpath.toString(), "@sources.txt", "-Xdiags:verbose", "-Xlint:deprecation", "-Xmaxerrs", "5", "-nowarn", debugFlag, "-d", "build/classes");
                 }
             }
             assert result != null;
@@ -609,14 +611,27 @@ public final class jbp {
     }
 
     public static void main(final String[] args) {
-        if (args.length != 0) {
-            System.out.println("Program does not take any arguments.");
-            return;
+        if (args.length == 0) {
+            compileWithDebugInfo = true;
+        } else if (args.length == 1) {
+            final String releaseMode = args[0];
+            if (releaseMode.equals("--debug")) {
+                compileWithDebugInfo = true;
+            } else if (releaseMode.equals("--release")) {
+                compileWithDebugInfo = false;
+            } else {
+                System.out.println("Invalid release mode specified.");
+                System.out.println("Release mode has to be either '--debug' or '--release'");
+                System.exit(-1);
+            }
+        } else {
+            System.out.println("Invalid amount of arguments specified.");
+            System.out.println("Either run with '--debug' or '--release' or omit it to choose debug mode.");
+            System.exit(-1);
         }
-        assert args.length == 0;
 
         System.out.println("===========");
-        System.out.println("jbp v0.3.0");
+        System.out.println("jbp v0.4.0");
         System.out.println("===========");
         System.out.println();
         startNanoTime = System.nanoTime();
