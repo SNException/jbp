@@ -34,6 +34,7 @@ public final class jbp {
     private static long startNanoTime;
     private static String entryPoint = null;
     private static boolean compileWithDebugInfo = true;
+    private static boolean generateDoc = false;
 
     private static File[] listAllFiles(final File dir) throws IOException {
         assert dir != null;
@@ -382,7 +383,6 @@ public final class jbp {
                 for (int i = 0, l = lines.length; i < l; ++i) {
                     final String line = lines[i];
                     if (line.contains(":") && !line.equalsIgnoreCase("Code") && !line.equalsIgnoreCase("table")) { // @Robustness
-                        // @Bug: There are still some wrong values here; CHECK!
                         numberOfByteCodeInstructions += 1;
                         final String stripedLine = line.strip();
                         if (!stripedLine.contains("Code:")) {
@@ -479,6 +479,8 @@ public final class jbp {
             // For now we print a maximum number of 5 errors (-Xmaxerrs 5)
             // We also disable warning (-nowarn) because they are hardly every useful (execpt deprecated warnings)
             {
+                // @Todo: There seems to be javax.tool.JavaCompiler class which can do the compile while giving me more control (we can format nice error message more easily)
+                // Check whether we can use that instead of relying on javac in the path.
                 final String debugFlag = compileWithDebugInfo ? "-g" : "-g:none";
                 if (classpath.toString().isEmpty()) { // we have NO libraries
                     result = execShellCommand(null, null, "javac", "@sources.txt", "-Xdiags:verbose", "-Xlint:deprecation", "-Xmaxerrs", "5", "-nowarn", debugFlag, "-d", "build/classes");
@@ -525,6 +527,31 @@ public final class jbp {
             }
         } catch (final IOException ex) {
             buildFail("\t-> Failed to emit bytecode.");
+            assert false;
+        }
+    }
+
+    private static void generateDocumentation() {
+        System.out.println("> Generating JavaDoc for your project...");
+        final File javadocDir = new File("build/documentation");
+        if (!javadocDir.exists()) {
+            if (!javadocDir.mkdir()) {
+                buildFail("\t-> Failed to create javadoc directory.");
+                assert false;
+            }
+        }
+        try {
+            final String result = execShellCommand(null, null, "javadoc", "@sources.txt", "-d", "build/documentation");
+            // @Speed Statuscode instead of String.contains
+            if (result.contains("error")) {
+                System.out.println(result);
+                buildFail("\t-> Failed to generate documentation.");
+                assert false;
+            } else {
+                System.out.println("\t-> Documentation generated.");
+            }
+        } catch (final IOException ex) {
+            buildFail("\t-> Failed to generate documentation.");
             assert false;
         }
     }
@@ -583,6 +610,7 @@ public final class jbp {
         }
     }
 
+    // @Todo: Lets delete every directory (except build itself) aswell.
     private static void cleanBuildDirectory() {
         final File cwd = new File("build");
         if (!cwd.exists()) {
@@ -625,25 +653,75 @@ public final class jbp {
     public static void main(final String[] args) {
         if (args.length == 0) {
             compileWithDebugInfo = true;
+            generateDoc = false;
         } else if (args.length == 1) {
-            final String releaseMode = args[0];
-            if (releaseMode.equals("--debug")) {
+            final String arg = args[0];
+            if (arg.equals("--debug")) {
                 compileWithDebugInfo = true;
-            } else if (releaseMode.equals("--release")) {
+            } else if (arg.equals("--release")) {
                 compileWithDebugInfo = false;
+            } else if (arg.equals("--doc")) {
+                generateDoc = true;
+            } else if (arg.equals("--no-doc")) {
+                generateDoc = false;
             } else {
-                System.out.println("Invalid release mode specified.");
-                System.out.println("Release mode has to be either '--debug' or '--release'");
+                System.out.println("Invalid first argument.");
+                System.out.println("--debug   Compile with debug symbols (default).");
+                System.out.println("--release Compile without debug symbols.");
+                System.out.println("--doc     Generate javadoc for your project.");
+                System.out.println("--no-doc  Generate no javadoc for your project (default).");
+                System.exit(-1);
+            }
+        } else if (args.length == 2) {
+            // @Bug: In this branch; Possible to specify the same argument twice
+            final String arg1 = args[0];
+            if (arg1.equals("--debug")) {
+                compileWithDebugInfo = true;
+            } else if (arg1.equals("--release")) {
+                compileWithDebugInfo = false;
+            } else if (arg1.equals("--doc")) {
+                generateDoc = true;
+            } else if (arg1.equals("--no-doc")) {
+                generateDoc = false;
+            } else {
+                System.out.println("Invalid first argument.");
+                System.out.println("First argument can only be one of the following: ");
+                System.out.println("--debug   Compile with debug symbols (default).");
+                System.out.println("--release Compile without debug symbols.");
+                System.out.println("--doc     Generate javadoc for your project.");
+                System.out.println("--no-doc  Generate no javadoc for your project (default).");
+                System.exit(-1);
+            }
+            final String arg2 = args[1];
+            if (arg2.equals("--debug")) {
+                compileWithDebugInfo = true;
+            } else if (arg2.equals("--release")) {
+                compileWithDebugInfo = false;
+            } else if (arg2.equals("--doc")) {
+                generateDoc = true;
+            } else if (arg2.equals("--no-doc")) {
+                generateDoc = false;
+            } else {
+                System.out.println("Invalid second argument.");
+                System.out.println("Second argument can only be one of the following: ");
+                System.out.println("--debug   Compile with debug symbols (default).");
+                System.out.println("--release Compile without debug symbols.");
+                System.out.println("--doc     Generate javadoc for your project.");
+                System.out.println("--no-doc  Generate no javadoc for your project (default).");
                 System.exit(-1);
             }
         } else {
-            System.out.println("Invalid amount of arguments specified.");
-            System.out.println("Either run with '--debug' or '--release' or omit it to choose debug mode.");
+            assert args.length > 2;
+            System.out.println("Invalid amount of arguments specified (0 - 2).");
+            System.out.println("--debug   Compile with debug symbols (default).");
+            System.out.println("--release Compile without debug symbols.");
+            System.out.println("--doc     Generate javadoc for your project.");
+            System.out.println("--no-doc  Generate no javadoc for your project (default).");
             System.exit(-1);
         }
 
         System.out.println("===========");
-        System.out.println("jbp v0.5.0");
+        System.out.println("jbp v0.6.0");
         System.out.println("===========");
         System.out.println();
         startNanoTime = System.nanoTime();
@@ -652,6 +730,10 @@ public final class jbp {
             System.out.println();
             analyzeSourceTree();
             System.out.println();
+            if (generateDoc) {
+                generateDocumentation();
+                System.out.println();
+            }
             createClassFiles();
             System.out.println();
             createByteCodeFiles();

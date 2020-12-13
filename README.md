@@ -29,10 +29,12 @@ java jbp
 That is all. After that your project will build.
 ![output](image.PNG)
 
+You can also specify whether you want to include debug information
+when compiling by either using '--debug' or '--release'.
+If you omit it debug information will be included.
 
-You can also specify whether you want to include debug information when compiling
-by either using '--debug' or '--release'. If you omit it debug information will
-be included.
+In case you want to generate javadoc for your project simple add
+the '--doc' flag when executing the build.
 
 If you want to run/test your program, a nice way is to execute the following command sequence:
 ```
