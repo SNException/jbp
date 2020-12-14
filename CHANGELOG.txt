@@ -2,7 +2,7 @@ CHANGELOG
 ---------
 
 0.8.0
-- The Java compiler version will not get written to the manifest of the jar
+- The Java compiler version will now get written to the manifest of the jar
 
 0.7.0
 - Compiling now uses fix encoding of UTF-8
