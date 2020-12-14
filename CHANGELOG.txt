@@ -1,6 +1,12 @@
 CHANGELOG
 ---------
 
+0.7.0
+- Compiling now uses fix encoding of UTF-8
+- Bugfix: Now we can not specify the same argument twice, or have negating argument sequence like --debug AND --release
+- We now check the statuscode of javac to determine whether it was successfull or not. Before we did a String.contains
+on the output but that is slower and less accurate.
+
 0.6.0
 - Added functionality to generate javadoc (--doc or --no-doc)
 

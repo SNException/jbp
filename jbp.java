@@ -56,7 +56,7 @@ public final class jbp {
     private static void buildFail(final String reason) {
         assert reason != null;
 
-        // @Hack: We might failed the build and still have this file
+        // @Hack: We might still have this file.
         new File("sources.txt").delete();
 
         System.out.println(reason);
@@ -65,8 +65,10 @@ public final class jbp {
         System.exit(-1);
     }
 
-    private static String execShellCommand(final File out, final File cwd, final String...args) throws IOException {
+    private static Object[] execShellCommand(final File out, final File cwd, final String...args) throws IOException {
         assert args != null;
+
+        final Object[] result = new Object[2];
 
         final ProcessBuilder builder = new ProcessBuilder(args);
         if (cwd != null)
@@ -76,13 +78,14 @@ public final class jbp {
         if (out != null) {
 	        builder.redirectOutput(out);
             try {
-                builder.start().waitFor();
+                result[1] = builder.start().waitFor();
             } catch(final InterruptedException ex) {
                 assert false;
             }
             final StringBuilder buffer = new StringBuilder(4096);
             readFileIntoMemory(buffer, out);
-            return buffer.toString();
+            result[0] = buffer.toString();
+            return result;
         } else {
             final Process process = builder.start();
             final BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
@@ -94,7 +97,13 @@ public final class jbp {
                     break;
                 sb.append(line).append("\n");
             }
-            return sb.toString();
+            result[0] = sb.toString();
+            try {
+                result[1] = process.waitFor();
+            } catch (final InterruptedException ex) {
+                assert false;
+            }
+            return result;
         }
     }
 
@@ -376,10 +385,10 @@ public final class jbp {
                 }
             }
 
-            final String result = execShellCommand(out, null, (String[]) sclasses.toArray(String[]::new));
+            final Object[] result = execShellCommand(out, null, (String[]) sclasses.toArray(String[]::new));
 
             {
-                final String[] lines = result.split(System.lineSeparator());
+                final String[] lines = ((String) result[0]).split(System.lineSeparator());
                 for (int i = 0, l = lines.length; i < l; ++i) {
                     final String line = lines[i];
                     if (line.contains(":") && !line.equalsIgnoreCase("Code") && !line.equalsIgnoreCase("table")) { // @Robustness
@@ -403,7 +412,7 @@ public final class jbp {
                 }
             }
 
-            final String[] files = result.split("Compiled from");
+            final String[] files = ((String) result[0]).split("Compiled from");
             for (int i = 0, l = files.length; i < l; ++i) {
                 final String file = files[i];
                 if (file.strip().isEmpty())
@@ -474,7 +483,7 @@ public final class jbp {
                     assert false;
                 }
             }
-            String result = null;
+            Object[] result = null;
 
             // For now we print a maximum number of 5 errors (-Xmaxerrs 5)
             // We also disable warning (-nowarn) because they are hardly every useful (execpt deprecated warnings)
@@ -483,25 +492,24 @@ public final class jbp {
                 // Check whether we can use that instead of relying on javac in the path.
                 final String debugFlag = compileWithDebugInfo ? "-g" : "-g:none";
                 if (classpath.toString().isEmpty()) { // we have NO libraries
-                    result = execShellCommand(null, null, "javac", "@sources.txt", "-Xdiags:verbose", "-Xlint:deprecation", "-Xmaxerrs", "5", "-nowarn", debugFlag, "-d", "build/classes");
+                    result = execShellCommand(null, null, "javac", "@sources.txt", "-Xdiags:verbose", "-Xlint:deprecation", "-Xmaxerrs", "5", "-nowarn", debugFlag, "-d", "build/classes", "-encoding", "UTF-8");
                 } else { // we have libraries; need to specify classpath now
-                    result = execShellCommand(null, null, "javac", "-classpath", classpath.toString(), "@sources.txt", "-Xdiags:verbose", "-Xlint:deprecation", "-Xmaxerrs", "5", "-nowarn", debugFlag, "-d", "build/classes");
+                    result = execShellCommand(null, null, "javac", "-classpath", classpath.toString(), "@sources.txt", "-Xdiags:verbose", "-Xlint:deprecation", "-Xmaxerrs", "5", "-nowarn", debugFlag, "-d", "build/classes", "-encoding", "UTF-8");
                 }
             }
             assert result != null;
 
-            // @Speed @Robustness: Check for exit value instead of doing a string check!
-            if (result.contains("error")) {
+            if (/*result.contains("error")*/ ((int) result[1]) != 0) {
                 System.out.println("\t-> COMPILATION ERROR");
                 System.out.println();
                 System.out.println("############################");
                 System.out.println("ERRORS");
                 System.out.println();
-                System.out.println(result);
+                System.out.println(result[0]);
                 System.out.println("############################");
                 System.out.println("BUILD FAILED");
 
-                // @Hack: We might failed the build and still have this file
+                // @Hack: We still have this file
                 new File("sources.txt").delete();
 
                 System.exit(-1);
@@ -541,10 +549,9 @@ public final class jbp {
             }
         }
         try {
-            final String result = execShellCommand(null, null, "javadoc", "@sources.txt", "-d", "build/documentation");
-            // @Speed Statuscode instead of String.contains
-            if (result.contains("error")) {
-                System.out.println(result);
+            final Object[] result = execShellCommand(null, null, "javadoc", "@sources.txt", "-d", "build/documentation");
+            if (/*result.contains("error")*/ ((int) result[1]) != 0) {
+                System.out.println(result[0]);
                 buildFail("\t-> Failed to generate documentation.");
                 assert false;
             } else {
@@ -610,7 +617,6 @@ public final class jbp {
         }
     }
 
-    // @Todo: Lets delete every directory (except build itself) aswell.
     private static void cleanBuildDirectory() {
         final File cwd = new File("build");
         if (!cwd.exists()) {
@@ -641,6 +647,8 @@ public final class jbp {
                     deletionCounter += 1;
                 }
             }
+
+            // @Todo: Lets delete every directory (except build itself) aswell.
 
             if (deletionCounter == 0) {
                 System.out.println("\t-> Nothing to delete.");
@@ -693,23 +701,34 @@ public final class jbp {
                 System.exit(-1);
             }
             final String arg2 = args[1];
-            if (arg2.equals("--debug")) {
-                compileWithDebugInfo = true;
-            } else if (arg2.equals("--release")) {
-                compileWithDebugInfo = false;
-            } else if (arg2.equals("--doc")) {
-                generateDoc = true;
-            } else if (arg2.equals("--no-doc")) {
-                generateDoc = false;
+            if (arg1.equals("--debug") || arg1.equals("--release")) {
+                if (arg2.equals("--doc")) {
+                    generateDoc = true;
+                } else if (arg2.equals("--no-doc")) {
+                    generateDoc = false;
+                } else {
+                    System.out.println("Invalid second argument.");
+                    System.out.println("Second argument can only be one of the following: ");
+                    System.out.println("--doc     Generate javadoc for your project.");
+                    System.out.println("--no-doc  Generate no javadoc for your project (default).");
+                    System.exit(-1);
+                }
+            } else if (arg1.equals("--no-doc") || arg1.equals("--doc")) {
+                if (arg2.equals("--debug")) {
+                    compileWithDebugInfo = true;
+                } else if (arg2.equals("--release")) {
+                    compileWithDebugInfo = false;
+                } else {
+                    System.out.println("Invalid second argument.");
+                    System.out.println("Second argument can only be one of the following: ");
+                    System.out.println("--debug   Compile with debug symbols (default).");
+                    System.out.println("--release Compile without debug symbols.");
+                    System.exit(-1);
+                }
             } else {
-                System.out.println("Invalid second argument.");
-                System.out.println("Second argument can only be one of the following: ");
-                System.out.println("--debug   Compile with debug symbols (default).");
-                System.out.println("--release Compile without debug symbols.");
-                System.out.println("--doc     Generate javadoc for your project.");
-                System.out.println("--no-doc  Generate no javadoc for your project (default).");
-                System.exit(-1);
+                assert false;
             }
+
         } else {
             assert args.length > 2;
             System.out.println("Invalid amount of arguments specified (0 - 2).");
@@ -721,7 +740,7 @@ public final class jbp {
         }
 
         System.out.println("===========");
-        System.out.println("jbp v0.6.0");
+        System.out.println("jbp v0.7.0");
         System.out.println("===========");
         System.out.println();
         startNanoTime = System.nanoTime();
