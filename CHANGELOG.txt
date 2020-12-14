@@ -1,6 +1,9 @@
 CHANGELOG
 ---------
 
+0.8.0
+- The Java compiler version will not get written to the manifest of the jar
+
 0.7.0
 - Compiling now uses fix encoding of UTF-8
 - Bugfix: Now we can not specify the same argument twice, or have negating argument sequence like --debug AND --release

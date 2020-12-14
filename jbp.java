@@ -261,7 +261,14 @@ public final class jbp {
             mfData.append("Class-Path: " + classpath.toString()).append(System.lineSeparator());
         }
 
-        mfData.append("Created-By: jbp").append(System.lineSeparator()); // @Incomplete: add current java version
+        String javacVersion = null;
+        try {
+            javacVersion = (String) execShellCommand(null, null, "javac", "--version")[0];
+        } catch (final IOException ex) {
+            javacVersion = "java";
+        }
+        assert javacVersion != null;
+        mfData.append("Created-By: ").append(javacVersion).append(System.lineSeparator());
         writeToFile("build/Manifest.txt", mfData.toString());
 
         boolean usesPackages = false;
@@ -740,7 +747,7 @@ public final class jbp {
         }
 
         System.out.println("===========");
-        System.out.println("jbp v0.7.0");
+        System.out.println("jbp v0.8.0");
         System.out.println("===========");
         System.out.println();
         startNanoTime = System.nanoTime();
