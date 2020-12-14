@@ -688,7 +688,6 @@ public final class jbp {
                 System.exit(-1);
             }
         } else if (args.length == 2) {
-            // @Bug: In this branch; Possible to specify the same argument twice
             final String arg1 = args[0];
             if (arg1.equals("--debug")) {
                 compileWithDebugInfo = true;
