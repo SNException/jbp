@@ -494,6 +494,9 @@ public final class jbp {
 
             // For now we print a maximum number of 5 errors (-Xmaxerrs 5)
             // We also disable warning (-nowarn) because they are hardly every useful (execpt deprecated warnings)
+            // @Todo: We only get warnings about deprecation displayed iff also at the same time
+            // encounter an (or multiple) compilation errors. Otherwise warnings will not get shown
+            // to the user. This is not what we want, I think.
             {
                 // @Todo: There seems to be javax.tool.JavaCompiler class which can do the compile while giving me more control (we can format nice error message more easily)
                 // Check whether we can use that instead of relying on javac in the path.
