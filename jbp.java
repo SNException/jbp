@@ -1,14 +1,14 @@
-// ---------------------------------------------------------------------
-//
-// jbp - Build tool for Java programs.
-//
-// Copyright (C) 2020 Niklas Schultz
-// All rights reserved.
-//
-// This software source file is licensed under the terms of MIT license.
-// For details, please read the LICENSE file.
-//
-// ---------------------------------------------------------------------
+/* ---------------------------------------------------------------------
+
+    jbp - Build tool for Java programs.
+
+    Copyright (C) 2020 Niklas Schultz
+    All rights reserved.
+
+    This software source file is licensed under the terms of MIT license.
+    For details, please read the LICENSE file.
+
+--------------------------------------------------------------------- */
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -737,7 +737,6 @@ public final class jbp {
             } else {
                 assert false;
             }
-
         } else {
             assert args.length > 2;
             System.out.println("Invalid amount of arguments specified (0 - 2).");
