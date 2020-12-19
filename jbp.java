@@ -46,9 +46,8 @@ public final class jbp {
             final File[] result = new File[files.size()];
 
             assert files.size() == result.length;
-            for (int i = 0, l = result.length; i < l; ++i) {
+            for (int i = 0, l = result.length; i < l; ++i)
                 result[i] = new File(files.get(i));
-            }
             return result;
         }
     }
@@ -56,7 +55,7 @@ public final class jbp {
     private static void buildFail(final String reason) {
         assert reason != null;
 
-        // @Hack: We might still have this file.
+        // @Hack: We might still have this file. Maybe using file.deleteOnExit() would be more appropriate?
         new File("sources.txt").delete();
 
         System.out.println(reason);
@@ -190,11 +189,10 @@ public final class jbp {
                         assert false;
                     }
                 }
-                if (jars.length == 1) {
+                if (jars.length == 1)
                     System.out.println("\t-> Program uses " + jars.length + " library.");
-                } else {
+                else
                     System.out.println("\t-> Program uses " + jars.length + " libraries.");
-                }
             }
         }
 
@@ -307,9 +305,8 @@ public final class jbp {
                 for (int i = 0, l = classes.length; i < l; ++i) {
                     final File file = classes[i];
                     if (!file.isDirectory()) {
-                        if (file.getName().split("//.")[0].equals(entryPoint + ".class")) { // @Hack
+                        if (file.getName().split("//.")[0].equals(entryPoint + ".class")) // @Hack
                             entryPointFile = file;
-                        }
                     }
                 }
                 assert entryPointFile != null;
@@ -387,9 +384,8 @@ public final class jbp {
             sclasses.add("-c");
             sclasses.add("-p");
             for (final File file : classes) {
-                if (!file.isDirectory()) {
+                if (!file.isDirectory())
                     sclasses.add(file.getAbsolutePath());
-                }
             }
 
             final Object[] result = execShellCommand(out, null, (String[]) sclasses.toArray(String[]::new));
@@ -405,13 +401,12 @@ public final class jbp {
                             final String[] arr = line.strip().split(" ");
                             if (arr.length > 1) {
                                 final String instruction = arr[1];
-                                if (instruction.equals("new")) {
+                                if (instruction.equals("new"))
                                     numberOfNewCalls += 1;
-                                } else if (instruction.contains("invoke")) {
+                                else if (instruction.contains("invoke"))
                                     numberOfMethods += 1;
-                                } else if (instruction.equals("putfield")) {
+                                else if (instruction.equals("putfield"))
                                     numberOfFields += 1;
-                                }
                             }
                         }
 
@@ -445,9 +440,8 @@ public final class jbp {
                     continue;
 
                 final StringBuilder content = new StringBuilder();
-                for (int j = 1; j < lines.length; ++j) {
+                for (int j = 1; j < lines.length; ++j)
                     content.append(lines[j]).append("\n");
-                }
                 writeToFile("build/bytecode/" + fileName, content.toString());
             }
             System.out.printf("\t-> Total of %d bytecode instructions.\n", numberOfByteCodeInstructions);
@@ -457,9 +451,8 @@ public final class jbp {
         } catch (final IOException ex) {
             System.out.println("\t-> Failed to generate readable bytecode files.");
         } finally {
-            if (!out.delete()) {
+            if (!out.delete())
                 System.out.println("\t-> Failed to delete bytecode_tmp.txt file.");
-            }
         }
     }
 
@@ -501,11 +494,10 @@ public final class jbp {
                 // @Todo: There seems to be javax.tool.JavaCompiler class which can do the compile while giving me more control (we can format nice error message more easily)
                 // Check whether we can use that instead of relying on javac in the path.
                 final String debugFlag = compileWithDebugInfo ? "-g" : "-g:none";
-                if (classpath.toString().isEmpty()) { // we have NO libraries
+                if (classpath.toString().isEmpty()) // we have NO libraries
                     result = execShellCommand(null, null, "javac", "@sources.txt", "-Xdiags:verbose", "-Xlint:deprecation", "-Xmaxerrs", "5", "-nowarn", debugFlag, "-d", "build/classes", "-encoding", "UTF-8");
-                } else { // we have libraries; need to specify classpath now
+                else // we have libraries; need to specify classpath now
                     result = execShellCommand(null, null, "javac", "-classpath", classpath.toString(), "@sources.txt", "-Xdiags:verbose", "-Xlint:deprecation", "-Xmaxerrs", "5", "-nowarn", debugFlag, "-d", "build/classes", "-encoding", "UTF-8");
-                }
             }
             assert result != null;
 
@@ -529,11 +521,11 @@ public final class jbp {
                     for (final File file : classFiles) {
                         if (!file.getName().endsWith(".class"))
                             continue;
-                        if (file.getName().contains("$")) {
+
+                        if (file.getName().contains("$"))
                             numberOfAnonymousClassFiles += 1;
-                        } else {
+                        else
                             numberOfClassFiles += 1;
-                        }
                     }
                 } catch (final IOException ex) {
                     buildFail("\t-> Failed to count class files.");
@@ -653,18 +645,16 @@ public final class jbp {
 
             for (int i = 0, l = files.length; i < l; ++i) {
                 final File file = files[i];
-                if (file.delete()) {
+                if (file.delete())
                     deletionCounter += 1;
-                }
             }
 
             // @Todo: Lets delete every directory (except build itself) aswell.
 
-            if (deletionCounter == 0) {
+            if (deletionCounter == 0)
                 System.out.println("\t-> Nothing to delete.");
-            } else {
+            else
                 System.out.printf("\t-> Deleted %d files.\n", deletionCounter);
-            }
         }
     }
 
