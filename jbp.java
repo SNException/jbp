@@ -662,6 +662,17 @@ public final class jbp {
         if (args.length == 0) {
             compileWithDebugInfo = true;
             generateDoc = false;
+            // @Todo: If we the user did not provide any arguments, let's check
+            // for a 'jbp.settings' file in the current directory. In case it does not
+            // exist then that is completly fine. But if it does we can use that config.
+            // Example config:
+            // ProgramName     : MyProgram.jar
+            // EntryPoint      : Main.java
+            // Mode            : Debug
+            // Documentation   : Yes
+            // ByteCodeDetails : No
+            // Encoding        : UTF_8
+            // Warnings        : Yes
         } else if (args.length == 1) {
             final String arg = args[0];
             if (arg.equals("--debug")) {
