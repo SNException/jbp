@@ -11,7 +11,7 @@ as I find very complex and take a lot of configuration work.
 
 I just wanted a way to say 'build my project' and get an executable jar without any setup.
 That is why I created this program. It is a single .java file which acts as a wrapper around
-around the tools inside your JDK (javac, javap and jar).
+around the tools inside your JDK (javac, javap, javadoc and jar).
 
 What I also wanted is some additional information about my project especially regarding the emitted bytecode.
 That is why this tool will generate .bytecode files which can immediately be read by just opening them in a
@@ -29,13 +29,6 @@ java jbp
 That is all. After that your project will build.
 ![output](image.PNG)
 
-You can also specify whether you want to include debug information
-when compiling by either using '--debug' or '--release'.
-If you omit it debug information will be included.
-
-In case you want to generate javadoc for your project simple add
-the '--doc' flag when executing the build.
-
 If you want to run/test your program, a nice way is to execute the following command sequence:
 ```
 pushd build\release && java -jar Program.jar && popd
@@ -49,6 +42,22 @@ If you have other resource files (like images or config files) simply create a '
 screwed many times by incremental builds in the past where I was not running the most recent version.
 Therefore this tool will make a fresh build from scratch everytime so you can be sure there isn't any garbage left from
 the previous build.
+
+If you want to change the build configuration you can create a jbp.config file in your project root directory
+and change them in there.
+
+Example jbp.config (which represents the default build config):
+```
+ProgramName : Program.jar
+EntryPoint : ---
+Mode : debug
+Encoding : UTF-8
+Documentation : No
+ByteCodeDetails : Yes
+```
+
+Settings 'EntryPoint' to '---' just means that you wish to have jbp find out the entry point for you.
+Note that all of those entries are optional.
 
 ## License
 

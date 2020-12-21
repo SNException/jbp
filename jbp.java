@@ -25,16 +25,23 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public final class jbp {
 
     private static long startNanoTime;
-    private static String entryPoint = null;
-    private static boolean compileWithDebugInfo = true;
-    private static boolean generateDoc = false;
+
+    // config
+    private static String programName     = null;
+    private static String entryPoint      = null;
+    private static String mode            = null;
+    private static String encoding        = null;
+    private static String doc             = null;
+    private static String byteCodeDetails = null;
 
     private static File[] listAllFiles(final File dir) throws IOException {
         assert dir != null;
@@ -159,7 +166,7 @@ public final class jbp {
         }
 
         try {
-            Files.copy(Paths.get("build/Program.jar"), new File("build/release/Program.jar").toPath(), StandardCopyOption.REPLACE_EXISTING);
+            Files.copy(Paths.get("build/" + programName), new File("build/release/" + programName).toPath(), StandardCopyOption.REPLACE_EXISTING);
         } catch (final IOException ex) {
             buildFail("\t-> Failed to copy executable to release directory.");
             assert false;
@@ -198,7 +205,7 @@ public final class jbp {
 
         // @Robustness:
         new File("build/Manifest.txt").delete();
-        new File("build/Program.jar").delete();
+        new File("build/" + programName).delete();
 
         // resource handling @Incomplete: Directory structure will not get copied!!!!!!
         final File res = new File("res");
@@ -294,7 +301,7 @@ public final class jbp {
             final List<String> args = new ArrayList<>(classes.length);
             args.add("jar");
             args.add("cfme");
-            args.add("../Program.jar");  // gets moved to release later
+            args.add("../" + programName);  // gets moved to release later
             args.add("../Manifest.txt"); // gets deleted later
 
             // find out entry point
@@ -309,7 +316,9 @@ public final class jbp {
                             entryPointFile = file;
                     }
                 }
-                assert entryPointFile != null;
+                if (entryPointFile == null) {
+                    buildFail(String.format("\t-> Main class '%s' does not exist.", entryPoint));
+                }
                 args.add(entryPointFile.getPath().replace("build\\", "").replace("classes\\", "").replace(".class", "").replace("\\", "."));
             }
 
@@ -333,14 +342,14 @@ public final class jbp {
             try {
                 // @Todo: Check result in case of error
                 System.out.println("\t-> No java packages are used.");
-                execShellCommand(null, new File("build/classes"), "jar", "cfme", "../Program.jar", "../Manifest.txt", entryPoint, "*.class");
+                execShellCommand(null, new File("build/classes"), "jar", "cfme", "../" + programName, "../Manifest.txt", entryPoint, "*.class");
             } catch (final IOException ex) {
                buildFail("->\t Failed to create executable.");
                assert false;
             }
         }
 
-        final File program = new File("build/Program.jar");
+        final File program = new File("build/" + programName);
         if (program.length() == 0) {
             buildFail("\t-> Failed to create executable.");
             assert false;
@@ -458,7 +467,7 @@ public final class jbp {
 
     private static void createClassFiles() {
         try {
-            System.out.printf("> Parsing and emitting bytecode instructions (%s)...\n", compileWithDebugInfo ? "debug mode" : "release mode");
+            System.out.printf("> Parsing and emitting bytecode instructions (%s)...\n", mode);
 
             final char classpathSeparator = System.getProperty("os.name").toLowerCase().contains("win") ? ';' : ':';
             int numberOfClassFiles = 0;
@@ -493,11 +502,18 @@ public final class jbp {
             {
                 // @Todo: There seems to be javax.tool.JavaCompiler class which can do the compile while giving me more control (we can format nice error message more easily)
                 // Check whether we can use that instead of relying on javac in the path.
-                final String debugFlag = compileWithDebugInfo ? "-g" : "-g:none";
+                String debugFlag = null;
+                if (mode.equalsIgnoreCase("debug")) {
+                    debugFlag = "-g";
+                } else if (mode.equalsIgnoreCase("release")) {
+                    debugFlag = "-g:none";
+                } else {
+                    assert false;
+                }
                 if (classpath.toString().isEmpty()) // we have NO libraries
-                    result = execShellCommand(null, null, "javac", "@sources.txt", "-Xdiags:verbose", "-Xlint:deprecation", "-Xmaxerrs", "5", "-nowarn", debugFlag, "-d", "build/classes", "-encoding", "UTF-8");
+                    result = execShellCommand(null, null, "javac", "@sources.txt", "-Xdiags:verbose", "-Xlint:deprecation", "-Xmaxerrs", "5", "-nowarn", debugFlag, "-d", "build/classes", "-encoding", encoding);
                 else // we have libraries; need to specify classpath now
-                    result = execShellCommand(null, null, "javac", "-classpath", classpath.toString(), "@sources.txt", "-Xdiags:verbose", "-Xlint:deprecation", "-Xmaxerrs", "5", "-nowarn", debugFlag, "-d", "build/classes", "-encoding", "UTF-8");
+                    result = execShellCommand(null, null, "javac", "-classpath", classpath.toString(), "@sources.txt", "-Xdiags:verbose", "-Xlint:deprecation", "-Xmaxerrs", "5", "-nowarn", debugFlag, "-d", "build/classes", "-encoding", encoding);
             }
             assert result != null;
 
@@ -596,9 +612,11 @@ public final class jbp {
 
             final StringBuilder locBuffer = new StringBuilder(1024);
             readFileIntoMemory(locBuffer, file);
-            if (locBuffer.toString().contains("public static void main(")) { // @Robustness
-                entryPoint = file.getName().split("\\.")[0];
-                numberOfEntryPoints += 1;
+            if (entryPoint == null) {
+                if (locBuffer.toString().contains("public static void main(")) { // @Robustness
+                    entryPoint = file.getName().split("\\.")[0];
+                    numberOfEntryPoints += 1;
+                }
             }
             loc += locBuffer.toString().split("\n").length;
         }
@@ -658,125 +676,121 @@ public final class jbp {
         }
     }
 
+    private static void loadConfiguration() {
+        final File configFile = new File("jbp.config");
+        if (configFile.exists()) {
+            final StringBuilder config = new StringBuilder();
+            readFileIntoMemory(config, configFile);
+            final String[] configLines = config.toString().split("\n");
+            final Map<String, String> configMap = new LinkedHashMap<>();
+            for (final String configLine : configLines) {
+                if (configLine.strip().isEmpty())
+                    continue;
+
+                final String[] entry = configLine.strip().split(":");
+                if (entry.length != 2) {
+                    buildFail("Invalid config file entry."); // @Todo: Improve error message
+                    assert false;
+                }
+
+                final String lhs = entry[0].strip();
+                final String rhs = entry[1].strip();
+                configMap.put(lhs, rhs);
+            }
+
+            programName = configMap.get("ProgramName");
+            entryPoint = configMap.get("EntryPoint");
+            mode = configMap.get("Mode");
+            if (mode != null) { // null would have been fine
+                if (!mode.equalsIgnoreCase("debug") && !mode.equalsIgnoreCase("release")) {
+                    buildFail("Mode can only be set to 'debug' or 'release'.");
+                    assert false;
+                }
+            }
+            encoding = configMap.get("Encoding");
+
+            doc = configMap.get("Documentation");
+            if (doc != null) { // null would have been fine
+                if (!doc.equalsIgnoreCase("yes") && !doc.equalsIgnoreCase("no")) {
+                    buildFail("Documentation can only be set to 'yes' or 'no'.");
+                    assert false;
+                }
+            }
+            byteCodeDetails = configMap.get("ByteCodeDetails");
+            if (byteCodeDetails != null) { // null would have been fine
+                if (!byteCodeDetails.equalsIgnoreCase("yes") && !byteCodeDetails.equalsIgnoreCase("no")) {
+                    buildFail("ByteCodeDetails can only be set to 'yes' or 'no'.");
+                    assert false;
+                }
+            }
+        }
+
+        // handle values which have not been set yet
+        programName = programName == null ? "Program.jar" : programName;
+        entryPoint = entryPoint == null || entryPoint.equalsIgnoreCase("---") ? null : entryPoint; // if null will get set when analyzing the source tree
+        mode = mode == null ? "debug" : mode;
+        encoding = encoding == null ? "UTF-8" : encoding;
+        doc = doc == null ? "no" : doc;
+        byteCodeDetails = byteCodeDetails == null ? "yes" : byteCodeDetails;
+    }
+
     public static void main(final String[] args) {
         if (args.length == 0) {
-            compileWithDebugInfo = true;
-            generateDoc = false;
-            // @Todo: If we the user did not provide any arguments, let's check
-            // for a 'jbp.settings' file in the current directory. In case it does not
-            // exist then that is completly fine. But if it does we can use that config.
-            // Example config:
-            // ProgramName     : MyProgram.jar
-            // EntryPoint      : Main.java
-            // Mode            : Debug
-            // Documentation   : Yes
-            // ByteCodeDetails : No
-            // Encoding        : UTF_8
-            // Warnings        : Yes
+            startNanoTime = System.nanoTime();
+            {
+                System.out.println();
+                loadConfiguration();
+                cleanBuildDirectory();
+                System.out.println();
+                analyzeSourceTree();
+                System.out.println();
+                if (doc.equalsIgnoreCase("yes")) {
+                    generateDocumentation();
+                    System.out.println();
+                }
+                createClassFiles();
+                System.out.println();
+                if (byteCodeDetails.equalsIgnoreCase("yes")) {
+                    createByteCodeFiles();
+                    System.out.println();
+                }
+                createExecutable();
+                System.out.println();
+                packageRelease();
+                System.out.println();
+                deleteSourcesFiles();
+            }
+
+            final long elapsedMillis = (System.nanoTime() - startNanoTime) / 1000000;
+            System.out.println();
+            System.out.println("BUILD SUCCESSFULL");
+            System.out.println("-----------------");
+            System.out.println("TOTAL BUILD TIME : " + elapsedMillis / 1000.0 + " SECONDS");
         } else if (args.length == 1) {
             final String arg = args[0];
-            if (arg.equals("--debug")) {
-                compileWithDebugInfo = true;
-            } else if (arg.equals("--release")) {
-                compileWithDebugInfo = false;
-            } else if (arg.equals("--doc")) {
-                generateDoc = true;
-            } else if (arg.equals("--no-doc")) {
-                generateDoc = false;
+            if (arg.equalsIgnoreCase("--version")) {
+                System.out.println("v0.9.0");
+            } else if (arg.equalsIgnoreCase("--help")) {
+                System.out.println("jbp (just build please) is a build tool for java projects.");
+                System.out.println("Simply execute this file in your root project directory to execute a full build.");
+                System.out.println("In case you wish to change the build configuration, you only need to create a 'jbp.config' file and change them there.");
+                System.out.println();
+                System.out.println("Example config file:");
+                System.out.println("ProgramName : Program.jar");
+                System.out.println("EntryPoint : ---");
+                System.out.println("Mode : debug");
+                System.out.println("Encoding : UTF-8");
+                System.out.println("Documentation : No");
+                System.out.println("ByteCodeDetails : Yes");
             } else {
-                System.out.println("Invalid first argument.");
-                System.out.println("--debug   Compile with debug symbols (default).");
-                System.out.println("--release Compile without debug symbols.");
-                System.out.println("--doc     Generate javadoc for your project.");
-                System.out.println("--no-doc  Generate no javadoc for your project (default).");
+                System.out.println("Invalid arguments.");
+                System.out.println("Arguments can either be '--version' or '--help'");
                 System.exit(-1);
-            }
-        } else if (args.length == 2) {
-            final String arg1 = args[0];
-            if (arg1.equals("--debug")) {
-                compileWithDebugInfo = true;
-            } else if (arg1.equals("--release")) {
-                compileWithDebugInfo = false;
-            } else if (arg1.equals("--doc")) {
-                generateDoc = true;
-            } else if (arg1.equals("--no-doc")) {
-                generateDoc = false;
-            } else {
-                System.out.println("Invalid first argument.");
-                System.out.println("First argument can only be one of the following: ");
-                System.out.println("--debug   Compile with debug symbols (default).");
-                System.out.println("--release Compile without debug symbols.");
-                System.out.println("--doc     Generate javadoc for your project.");
-                System.out.println("--no-doc  Generate no javadoc for your project (default).");
-                System.exit(-1);
-            }
-            final String arg2 = args[1];
-            if (arg1.equals("--debug") || arg1.equals("--release")) {
-                if (arg2.equals("--doc")) {
-                    generateDoc = true;
-                } else if (arg2.equals("--no-doc")) {
-                    generateDoc = false;
-                } else {
-                    System.out.println("Invalid second argument.");
-                    System.out.println("Second argument can only be one of the following: ");
-                    System.out.println("--doc     Generate javadoc for your project.");
-                    System.out.println("--no-doc  Generate no javadoc for your project (default).");
-                    System.exit(-1);
-                }
-            } else if (arg1.equals("--no-doc") || arg1.equals("--doc")) {
-                if (arg2.equals("--debug")) {
-                    compileWithDebugInfo = true;
-                } else if (arg2.equals("--release")) {
-                    compileWithDebugInfo = false;
-                } else {
-                    System.out.println("Invalid second argument.");
-                    System.out.println("Second argument can only be one of the following: ");
-                    System.out.println("--debug   Compile with debug symbols (default).");
-                    System.out.println("--release Compile without debug symbols.");
-                    System.exit(-1);
-                }
-            } else {
-                assert false;
             }
         } else {
-            assert args.length > 2;
-            System.out.println("Invalid amount of arguments specified (0 - 2).");
-            System.out.println("--debug   Compile with debug symbols (default).");
-            System.out.println("--release Compile without debug symbols.");
-            System.out.println("--doc     Generate javadoc for your project.");
-            System.out.println("--no-doc  Generate no javadoc for your project (default).");
+            System.out.println("Invalid amount of arguments.");
+            System.out.println("Arguments can either be '--version' or '--help'");
             System.exit(-1);
         }
-
-        System.out.println("===========");
-        System.out.println("jbp v0.8.0");
-        System.out.println("===========");
-        System.out.println();
-        startNanoTime = System.nanoTime();
-        {
-            cleanBuildDirectory();
-            System.out.println();
-            analyzeSourceTree();
-            System.out.println();
-            if (generateDoc) {
-                generateDocumentation();
-                System.out.println();
-            }
-            createClassFiles();
-            System.out.println();
-            createByteCodeFiles();
-            System.out.println();
-            createExecutable();
-            System.out.println();
-            packageRelease();
-            System.out.println();
-            deleteSourcesFiles();
-        }
-
-        final long elapsedMillis = (System.nanoTime() - startNanoTime) / 1000000;
-        System.out.println();
-        System.out.println("BUILD SUCCESSFULL");
-        System.out.println("-----------------");
-        System.out.println("TOTAL BUILD TIME : " + elapsedMillis / 1000.0 + " SECONDS");
     }
 }
