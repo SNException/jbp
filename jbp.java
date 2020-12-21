@@ -42,6 +42,7 @@ public final class jbp {
     private static String encoding        = null;
     private static String doc             = null;
     private static String byteCodeDetails = null;
+    private static String runAfterBuild   = null;
 
     private static File[] listAllFiles(final File dir) throws IOException {
         assert dir != null;
@@ -723,6 +724,13 @@ public final class jbp {
                     assert false;
                 }
             }
+            runAfterBuild = configMap.get("RunAfterBuild");
+            if (runAfterBuild != null) { // null would have been fine
+                if (!runAfterBuild.equalsIgnoreCase("yes") && !runAfterBuild.equalsIgnoreCase("no")) {
+                    buildFail("RunAfterBuild can only be set to 'yes' or 'no'.");
+                    assert false;
+                }
+            }
         }
 
         // handle values which have not been set yet
@@ -732,6 +740,7 @@ public final class jbp {
         encoding = encoding == null ? "UTF-8" : encoding;
         doc = doc == null ? "no" : doc;
         byteCodeDetails = byteCodeDetails == null ? "yes" : byteCodeDetails;
+        runAfterBuild = runAfterBuild == null ? "no" : runAfterBuild;
     }
 
     public static void main(final String[] args) {
@@ -766,10 +775,27 @@ public final class jbp {
             System.out.println("BUILD SUCCESSFULL");
             System.out.println("-----------------");
             System.out.println("TOTAL BUILD TIME : " + elapsedMillis / 1000.0 + " SECONDS");
+
+            // @Incomplete: We need to watch the program output for messages
+            if (runAfterBuild.equalsIgnoreCase("yes")) {
+                System.out.println();
+                System.out.println();
+                System.out.println("Running your program after the build...");
+                System.out.println("----------");
+                try {
+                    final Object[] result = execShellCommand(null, new File("build/release"), "java", "-ea", "-jar", programName);
+                    if ((int) result[1] == 0)
+                        System.out.println(result[0]);
+                    else
+                        System.out.println("Failed to run your program.");
+                } catch (final IOException ex) {
+                    System.out.printf("Failed to run your program because of '%s'\n", ex.getMessage());
+                }
+            }
         } else if (args.length == 1) {
             final String arg = args[0];
             if (arg.equalsIgnoreCase("--version")) {
-                System.out.println("v0.9.0");
+                System.out.println("v0.10.0");
             } else if (arg.equalsIgnoreCase("--help")) {
                 System.out.println("jbp (just build please) is a build tool for java projects.");
                 System.out.println("Simply execute this file in your root project directory to execute a full build.");
@@ -782,14 +808,15 @@ public final class jbp {
                 System.out.println("Encoding : UTF-8");
                 System.out.println("Documentation : No");
                 System.out.println("ByteCodeDetails : Yes");
+                System.out.println("RunAfterBuild : No");
             } else {
                 System.out.println("Invalid arguments.");
-                System.out.println("Arguments can either be '--version' or '--help'");
+                System.out.println("Argument can either be '--version' or '--help'");
                 System.exit(-1);
             }
         } else {
             System.out.println("Invalid amount of arguments.");
-            System.out.println("Arguments can either be '--version' or '--help'");
+            System.out.println("Argument can either be '--version' or '--help'");
             System.exit(-1);
         }
     }

@@ -54,10 +54,11 @@ Mode : debug
 Encoding : UTF-8
 Documentation : No
 ByteCodeDetails : Yes
+RunAfterBuild : No
 ```
 
-Settings 'EntryPoint' to '---' just means that you wish to have jbp find out the entry point for you.
-Note that all of those entries are optional.
+If you set 'EntryPoint' to '---' it just means that you wish to have 'jbp' find out the entry point for you.
+Note that all of those entries are optional and can therfore be omitted.
 
 ## License
 

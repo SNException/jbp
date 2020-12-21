@@ -1,6 +1,10 @@
 CHANGELOG
 ---------
 
+0.10.0 (21 December 2020)
+- Added a new setting 'RunAfterBuild' (defaults to 'No'). This is still incomplete because
+the output of the program will only be shown after it terminates.
+
 0.9.0 (21 December 2020)
 - Removed all previous command line arguments and added '--version' and '--help'
 - Implemented jbp.config loading; You can still just execute the jbp.class file and have your
