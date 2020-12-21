@@ -2,7 +2,7 @@ CHANGELOG
 ---------
 
 0.9.0 (21 December 2020)
-- Removed all previous command likne arguments and added '--version' and '--help'
+- Removed all previous command line arguments and added '--version' and '--help'
 - Implemented jbp.config loading; You can still just execute the jbp.class file and have your
 project build, but in case you wish to change the build configuration you can now create
 a jbp.config file in your root project directory and change them in there.
