@@ -518,7 +518,7 @@ public final class jbp {
             }
             assert result != null;
 
-            if (/*result.contains("error")*/ ((int) result[1]) != 0) {
+            if (((int) result[1]) != 0) {
                 System.out.println("\t-> COMPILATION ERROR");
                 System.out.println();
                 System.out.println("############################");
@@ -569,7 +569,7 @@ public final class jbp {
         }
         try {
             final Object[] result = execShellCommand(null, null, "javadoc", "@sources.txt", "-d", "build/documentation");
-            if (/*result.contains("error")*/ ((int) result[1]) != 0) {
+            if (((int) result[1]) != 0) {
                 System.out.println(result[0]);
                 buildFail("\t-> Failed to generate documentation.");
                 assert false;
