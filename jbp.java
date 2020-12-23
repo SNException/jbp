@@ -72,7 +72,7 @@ public final class jbp {
         System.exit(-1);
     }
 
-    private static Object[] execShellCommand(final File out, final File cwd, final String...args) throws IOException {
+    private static Object[] execShellCommand(final File out, final File cwd, final boolean print, final String...args) throws IOException {
         assert args != null;
 
         final Object[] result = new Object[2];
@@ -102,6 +102,8 @@ public final class jbp {
                 line = reader.readLine();
                 if (line == null)
                     break;
+                if (print)
+                    System.out.println(line);
                 sb.append(line).append("\n");
             }
             result[0] = sb.toString();
@@ -269,7 +271,7 @@ public final class jbp {
 
         String javacVersion = null;
         try {
-            javacVersion = (String) execShellCommand(null, null, "javac", "--version")[0];
+            javacVersion = (String) execShellCommand(null, null, false, "javac", "--version")[0];
         } catch (final IOException ex) {
             javacVersion = "java";
         }
@@ -334,7 +336,7 @@ public final class jbp {
             try {
                 // @Todo: Check result in case of error
                 System.out.println("\t-> Java packages are used.");
-                execShellCommand(null, new File("build/classes"), (String[]) args.toArray(String[]::new));
+                execShellCommand(null, new File("build/classes"), false, (String[]) args.toArray(String[]::new));
             } catch (final IOException ex) {
                buildFail("->\t Failed to create executable.");
                assert false;
@@ -343,7 +345,7 @@ public final class jbp {
             try {
                 // @Todo: Check result in case of error
                 System.out.println("\t-> No java packages are used.");
-                execShellCommand(null, new File("build/classes"), "jar", "cfme", "../" + programName, "../Manifest.txt", entryPoint, "*.class");
+                execShellCommand(null, new File("build/classes"), false, "jar", "cfme", "../" + programName, "../Manifest.txt", entryPoint, "*.class");
             } catch (final IOException ex) {
                buildFail("->\t Failed to create executable.");
                assert false;
@@ -398,7 +400,7 @@ public final class jbp {
                     sclasses.add(file.getAbsolutePath());
             }
 
-            final Object[] result = execShellCommand(out, null, (String[]) sclasses.toArray(String[]::new));
+            final Object[] result = execShellCommand(out, null, false, (String[]) sclasses.toArray(String[]::new));
 
             {
                 final String[] lines = ((String) result[0]).split(System.lineSeparator());
@@ -512,9 +514,9 @@ public final class jbp {
                     assert false;
                 }
                 if (classpath.toString().isEmpty()) // we have NO libraries
-                    result = execShellCommand(null, null, "javac", "@sources.txt", "-Xdiags:verbose", "-Xlint:deprecation", "-Xmaxerrs", "5", "-nowarn", debugFlag, "-d", "build/classes", "-encoding", encoding);
+                    result = execShellCommand(null, null, false, "javac", "@sources.txt", "-Xdiags:verbose", "-Xlint:deprecation", "-Xmaxerrs", "5", "-nowarn", debugFlag, "-d", "build/classes", "-encoding", encoding);
                 else // we have libraries; need to specify classpath now
-                    result = execShellCommand(null, null, "javac", "-classpath", classpath.toString(), "@sources.txt", "-Xdiags:verbose", "-Xlint:deprecation", "-Xmaxerrs", "5", "-nowarn", debugFlag, "-d", "build/classes", "-encoding", encoding);
+                    result = execShellCommand(null, null, false, "javac", "-classpath", classpath.toString(), "@sources.txt", "-Xdiags:verbose", "-Xlint:deprecation", "-Xmaxerrs", "5", "-nowarn", debugFlag, "-d", "build/classes", "-encoding", encoding);
             }
             assert result != null;
 
@@ -568,7 +570,7 @@ public final class jbp {
             }
         }
         try {
-            final Object[] result = execShellCommand(null, null, "javadoc", "@sources.txt", "-d", "build/documentation");
+            final Object[] result = execShellCommand(null, null, false, "javadoc", "@sources.txt", "-d", "build/documentation");
             if (((int) result[1]) != 0) {
                 System.out.println(result[0]);
                 buildFail("\t-> Failed to generate documentation.");
@@ -776,17 +778,15 @@ public final class jbp {
             System.out.println("-----------------");
             System.out.println("TOTAL BUILD TIME : " + elapsedMillis / 1000.0 + " SECONDS");
 
-            // @Incomplete: We need to watch the program output for messages
             if (runAfterBuild.equalsIgnoreCase("yes")) {
                 System.out.println();
                 System.out.println();
                 System.out.println("Running your program after the build...");
                 System.out.println("----------");
                 try {
-                    final Object[] result = execShellCommand(null, new File("build/release"), "java", "-ea", "-jar", programName);
-                    if ((int) result[1] == 0)
-                        System.out.println(result[0]);
-                    else
+                    // @Incomplete: We do not yet enable reacting to input requests via stdout from the started process (e.g java.util.Scanner)
+                    final Object[] result = execShellCommand(null, new File("build/release"), true, "java", "-ea", "-jar", programName);
+                    if ((int) result[1] != 0)
                         System.out.println("Failed to run your program.");
                 } catch (final IOException ex) {
                     System.out.printf("Failed to run your program because of '%s'\n", ex.getMessage());
@@ -795,7 +795,7 @@ public final class jbp {
         } else if (args.length == 1) {
             final String arg = args[0];
             if (arg.equalsIgnoreCase("--version")) {
-                System.out.println("v0.10.0");
+                System.out.println("v0.11.0");
             } else if (arg.equalsIgnoreCase("--help")) {
                 System.out.println("jbp (just build please) is a build tool for java projects.");
                 System.out.println("Simply execute this file in your root project directory to execute a full build.");
