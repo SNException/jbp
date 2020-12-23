@@ -102,6 +102,8 @@ public final class jbp {
                 line = reader.readLine();
                 if (line == null)
                     break;
+
+                assert line != null;
                 if (print)
                     System.out.println(line);
                 sb.append(line).append("\n");
@@ -262,9 +264,10 @@ public final class jbp {
                 classpath.append("libs/");
                 classpath.append(jars[i].getName()).append(" ");
             }
-            // class path must not end with the delimitter ';'.
+            // class path must not end with the delimitter ' '.
             assert classpath.toString().charAt(classpath.toString().length() - 1) == ' ';
             classpath.deleteCharAt(classpath.toString().length() - 1);
+            assert classpath.toString().charAt(classpath.toString().length() - 1) != ' ';
 
             mfData.append("Class-Path: " + classpath.toString()).append(System.lineSeparator());
         }
@@ -487,6 +490,7 @@ public final class jbp {
                 // class path must not end with the delimitter
                 assert classpath.toString().charAt(classpath.toString().length() - 1) == classpathSeparator;
                 classpath.deleteCharAt(classpath.toString().length() - 1);
+                assert classpath.toString().charAt(classpath.toString().length() - 1) != classpathSeparator;
             }
             final File classes = new File("build/classes");
             if (!classes.exists()) {
