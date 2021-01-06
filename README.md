@@ -66,7 +66,7 @@ SimpleOutput : No
 | Encoding | UTF-8 | The encoding used when you compile. |
 | Documentation | No | Whether you wish to generate javadoc. |
 | ByteCodeDetails | Yes | Generate human readable bytecode files and print simple stats about them. |
-| RunAfterBuild | No | Run your project after successful build. |
+| RunAfterBuild | No | Run your project after successful build. Note that it will be ran with assertions enabled. |
 | SimpleOutput | No | If set to 'Yes' only print whether build was successful or not (including errors in that case). |
 
 ## License
