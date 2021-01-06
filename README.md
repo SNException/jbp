@@ -58,8 +58,16 @@ RunAfterBuild : No
 SimpleOutput : No
 ```
 
-If you set 'EntryPoint' to '---' it just means that you wish to have 'jbp' find out the entry point for you.
-Note that all of those entries are optional and can therfore be omitted.
+| Entry | Default | Description |
+| --- | --- | --- |
+| ProgramName | Program.jar | The name you wish your executable jar should have. |
+| EntryPoint | --- | Class name containing your main method. The default value means you wish 'jbp' to find the entry out for you. |
+| Mode | debug | Whether you wish to include debug symbols in your release (debug) or not (release). |
+| Encoding | UTF-8 | The encoding used when you compile. |
+| Documentation | No | Whether you wish to generate javadoc. |
+| ByteCodeDetails | Yes | Generate human readable bytecode files and print simple stats about them. |
+| RunAfterBuild | No | Run your project after successful build. |
+| SimpleOutput | No | If set to 'Yes' only print whether build was successful or not (including errors in that case). |
 
 ## License
 
