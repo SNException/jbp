@@ -1,6 +1,9 @@
 CHANGELOG
 ---------
 
+0.12.1 (06 January 2021)
+- Slight performance fix by not computing some values when SimpleOutput is set to 'Yes'.
+
 0.12.0 (06 January 2021)
 - Updated copyright notice
 - 'SimpleOutput' config added

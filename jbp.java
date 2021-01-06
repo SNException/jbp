@@ -45,11 +45,15 @@ public final class jbp {
     private static String runAfterBuild   = null;
     private static String simpleOutput    = null;
 
+    // we have a boolean here for performance reason (so we do not have to check the
+    // string with equalsIgnoreCase all the time.)
+    private static boolean simpleOutputBool = false;
+
     private static void stdout(final String str) {
-        if (str == null && simpleOutput.equalsIgnoreCase("No")) {
+        if (str == null && !simpleOutputBool) {
             System.out.println();
         } else {
-            if (simpleOutput.equalsIgnoreCase("No")) {
+            if (!simpleOutputBool) {
                 if (str.endsWith("\n"))
                     System.out.print(str);
                 else
@@ -639,12 +643,15 @@ public final class jbp {
                     numberOfEntryPoints += 1;
                 }
             }
-            loc += locBuffer.toString().split("\n").length;
+            if (!simpleOutputBool)
+                loc += locBuffer.toString().split("\n").length;
         }
 
         writeToFile("sources.txt", sbuffer.toString());
-        stdout(String.format("\t-> Total of %d source files found.\n", sourceFileCounter));
-        stdout(String.format("\t-> Total lines of code are %d (including whitespaces and comments).\n", loc));
+        if (!simpleOutputBool) {
+            stdout(String.format("\t-> Total of %d source files found.\n", sourceFileCounter));
+            stdout(String.format("\t-> Total lines of code are %d (including whitespaces and comments).\n", loc));
+        }
         if (entryPoint != null) {
             assert numberOfEntryPoints >= 1;
             stdout(String.format("\t-> Entry point is '%s'.\n", entryPoint));
@@ -769,6 +776,8 @@ public final class jbp {
         byteCodeDetails = byteCodeDetails == null ? "yes" : byteCodeDetails;
         runAfterBuild = runAfterBuild == null ? "no" : runAfterBuild;
         simpleOutput = simpleOutput == null ? "no" : simpleOutput;
+
+        simpleOutputBool = simpleOutput.equalsIgnoreCase("Yes");
     }
 
     public static void main(final String[] args) {
@@ -776,7 +785,7 @@ public final class jbp {
             startNanoTime = System.nanoTime();
             {
                 loadConfiguration();
-                if (simpleOutput.equalsIgnoreCase("Yes")) {
+                if (simpleOutputBool) {
                     System.out.println("Building project...");
                     System.out.println();
                 } else {
@@ -826,7 +835,7 @@ public final class jbp {
         } else if (args.length == 1) {
             final String arg = args[0];
             if (arg.equalsIgnoreCase("--version")) {
-                System.out.println("v0.12.0");
+                System.out.println("v0.12.1");
             } else if (arg.equalsIgnoreCase("--help")) {
                 System.out.println("jbp (just build please) is a build tool for java projects. - Niklas Schultz");
                 System.out.println();
