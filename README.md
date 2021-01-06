@@ -55,6 +55,7 @@ Encoding : UTF-8
 Documentation : No
 ByteCodeDetails : Yes
 RunAfterBuild : No
+SimpleOutput : No
 ```
 
 If you set 'EntryPoint' to '---' it just means that you wish to have 'jbp' find out the entry point for you.

@@ -1,6 +1,10 @@
 CHANGELOG
 ---------
 
+0.12.0 (06 December 2021)
+- Updated copyright notice
+- 'SimpleOutput' config added
+
 0.11.0 (23 December 2020)
 - 'RunAfterBuild' now prints the output of the process continuously.
 

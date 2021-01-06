@@ -2,7 +2,7 @@
 
     jbp - Build tool for Java programs.
 
-    Copyright (C) 2020 Niklas Schultz
+    Copyright (C) 2020-2021 Niklas Schultz
     All rights reserved.
 
     This software source file is licensed under the terms of MIT license.
@@ -43,6 +43,20 @@ public final class jbp {
     private static String doc             = null;
     private static String byteCodeDetails = null;
     private static String runAfterBuild   = null;
+    private static String simpleOutput    = null;
+
+    private static void stdout(final String str) {
+        if (str == null && simpleOutput.equalsIgnoreCase("No")) {
+            System.out.println();
+        } else {
+            if (simpleOutput.equalsIgnoreCase("No")) {
+                if (str.endsWith("\n"))
+                    System.out.print(str);
+                else
+                    System.out.println(str);
+            }
+        }
+    }
 
     private static File[] listAllFiles(final File dir) throws IOException {
         assert dir != null;
@@ -129,7 +143,7 @@ public final class jbp {
             out.write(data.getBytes(StandardCharsets.UTF_8));
             out.flush();
         } catch (final IOException ex) {
-            System.out.printf("\t-> Failed to write file '%s'\n", file);
+            stdout(String.format("\t-> Failed to write file '%s'\n", file));
         }
     }
 
@@ -146,7 +160,7 @@ public final class jbp {
                 buffer.append(new String(chunk, 0, readBytes, StandardCharsets.UTF_8));
             }
         } catch (final IOException ex) {
-            System.out.printf("Failed to read file %s", file.getName());
+            stdout(String.format("Failed to read file %s", file.getName()));
         }
     }
 
@@ -155,13 +169,13 @@ public final class jbp {
         if (sources.exists()) {
             if (!sources.delete()) {
                 System.out.println();
-                System.out.println("Failed to delete sources.txt file.");
+                stdout("Failed to delete sources.txt file.");
             }
         }
     }
 
     private static void packageRelease() {
-        System.out.println("> Packaging release...");
+        stdout("> Packaging release...");
         final File release = new File("build/release");
         if (!release.exists()) {
             if (!release.mkdir()) {
@@ -179,7 +193,7 @@ public final class jbp {
 
         final File libs = new File("libs");
         if (!libs.exists()) {
-            System.out.println("\t-> Your program does not use any libraries.");
+            stdout("\t-> Your program does not use any libraries.");
         } else {
             final File dependencies = new File("build/release/libs");
             if (!dependencies.exists()) {
@@ -202,9 +216,9 @@ public final class jbp {
                     }
                 }
                 if (jars.length == 1)
-                    System.out.println("\t-> Program uses " + jars.length + " library.");
+                    stdout("\t-> Program uses " + jars.length + " library.");
                 else
-                    System.out.println("\t-> Program uses " + jars.length + " libraries.");
+                    stdout("\t-> Program uses " + jars.length + " libraries.");
             }
         }
 
@@ -231,18 +245,18 @@ public final class jbp {
                         continue;
                     Files.copy(resFile.toPath(), new File("build/release/res/" + resFile.getName()).toPath(), StandardCopyOption.REPLACE_EXISTING);
                 }
-                System.out.println("\t-> Copied all resources to the release.");
+                stdout("\t-> Copied all resources to the release.");
             } catch (final IOException ex) {
                 buildFail("\t-> Failed to all copy resources.");
                 assert false;
             }
         } else {
-            System.out.println("\t-> Program does not use any resource files.");
+            stdout("\t-> Program does not use any resource files.");
         }
 
         try {
             final long sizeOfReleaseInBytes = Files.walk(release.toPath()).mapToLong(p -> p.toFile().length()).sum();
-            System.out.printf("\t-> The full size of your release is %.3f %s\n", sizeOfReleaseInBytes / 1024.0f, "kb.");
+            stdout(String.format("\t-> The full size of your release is %.3f %s\n", sizeOfReleaseInBytes / 1024.0f, "kb."));
         } catch (final IOException ex) {
             System.out.println("\t -> Failed to calculate size of your release.");
             // lets not failed the entire build though, that seems dumb.
@@ -250,7 +264,7 @@ public final class jbp {
     }
 
     private static void createExecutable() {
-        System.out.println("> Building executable...");
+        stdout("> Building executable...");
 
         // building manifest
         final StringBuilder mfData = new StringBuilder(64);
@@ -338,7 +352,7 @@ public final class jbp {
 
             try {
                 // @Todo: Check result in case of error
-                System.out.println("\t-> Java packages are used.");
+                stdout("\t-> Java packages are used.");
                 execShellCommand(null, new File("build/classes"), false, (String[]) args.toArray(String[]::new));
             } catch (final IOException ex) {
                buildFail("->\t Failed to create executable.");
@@ -347,7 +361,7 @@ public final class jbp {
         } else {
             try {
                 // @Todo: Check result in case of error
-                System.out.println("\t-> No java packages are used.");
+                stdout("\t-> No java packages are used.");
                 execShellCommand(null, new File("build/classes"), false, "jar", "cfme", "../" + programName, "../Manifest.txt", entryPoint, "*.class");
             } catch (final IOException ex) {
                buildFail("->\t Failed to create executable.");
@@ -361,12 +375,12 @@ public final class jbp {
             assert false;
         }
 
-        System.out.printf("\t-> Size of executable is %.3f %s\n", program.length() / 1024.0f, "kb.");
+        stdout(String.format("\t-> Size of executable is %.3f %s\n", program.length() / 1024.0f, "kb."));
     }
 
     // @Robustness
     private static void createByteCodeFiles() {
-        System.out.println("> Generating readable bytecode files for easier debugging...");
+        stdout("> Generating readable bytecode files for easier debugging...");
 
         final File bytecode = new File("build/bytecode");
         if (!bytecode.exists()) {
@@ -459,21 +473,21 @@ public final class jbp {
                     content.append(lines[j]).append("\n");
                 writeToFile("build/bytecode/" + fileName, content.toString());
             }
-            System.out.printf("\t-> Total of %d bytecode instructions.\n", numberOfByteCodeInstructions);
-            System.out.printf("\t-> Total of %d function calls.\n", numberOfMethods);
-            System.out.printf("\t-> Total of %d fields.\n", numberOfFields);
-            System.out.printf("\t-> Total of %d 'new' calls (likely resulting in heap allocations).\n", numberOfNewCalls);
+            stdout(String.format("\t-> Total of %d bytecode instructions.\n", numberOfByteCodeInstructions));
+            stdout(String.format("\t-> Total of %d function calls.\n", numberOfMethods));
+            stdout(String.format("\t-> Total of %d fields.\n", numberOfFields));
+            stdout(String.format("\t-> Total of %d 'new' calls (likely resulting in heap allocations).\n", numberOfNewCalls));
         } catch (final IOException ex) {
-            System.out.println("\t-> Failed to generate readable bytecode files.");
+            stdout("\t-> Failed to generate readable bytecode files.");
         } finally {
             if (!out.delete())
-                System.out.println("\t-> Failed to delete bytecode_tmp.txt file.");
+                stdout("\t-> Failed to delete bytecode_tmp.txt file.");
         }
     }
 
     private static void createClassFiles() {
         try {
-            System.out.printf("> Parsing and emitting bytecode instructions (%s)...\n", mode);
+            stdout(String.format("> Parsing and emitting bytecode instructions (%s)...\n", mode));
 
             final char classpathSeparator = System.getProperty("os.name").toLowerCase().contains("win") ? ';' : ':';
             int numberOfClassFiles = 0;
@@ -525,8 +539,8 @@ public final class jbp {
             assert result != null;
 
             if (((int) result[1]) != 0) {
-                System.out.println("\t-> COMPILATION ERROR");
-                System.out.println();
+                stdout("\t-> COMPILATION ERROR");
+                stdout(null);
                 System.out.println("############################");
                 System.out.println("ERRORS");
                 System.out.println();
@@ -534,7 +548,7 @@ public final class jbp {
                 System.out.println("############################");
                 System.out.println("BUILD FAILED");
 
-                // @Hack: We still have this file
+                // @Hack: We might still have these files
                 new File("sources.txt").delete();
 
                 System.exit(-1);
@@ -555,8 +569,8 @@ public final class jbp {
                     assert false;
                 }
 
-                System.out.printf("\t-> Created %d class files.\n", numberOfClassFiles);
-                System.out.printf("\t-> Created %d anonymous class files.\n", numberOfAnonymousClassFiles);
+                stdout(String.format("\t-> Created %d class files.\n", numberOfClassFiles));
+                stdout(String.format("\t-> Created %d anonymous class files.\n", numberOfAnonymousClassFiles));
             }
         } catch (final IOException ex) {
             buildFail("\t-> Failed to emit bytecode.");
@@ -565,7 +579,7 @@ public final class jbp {
     }
 
     private static void generateDocumentation() {
-        System.out.println("> Generating JavaDoc for your project...");
+        stdout("> Generating JavaDoc for your project...");
         final File javadocDir = new File("build/documentation");
         if (!javadocDir.exists()) {
             if (!javadocDir.mkdir()) {
@@ -576,11 +590,11 @@ public final class jbp {
         try {
             final Object[] result = execShellCommand(null, null, false, "javadoc", "@sources.txt", "-d", "build/documentation");
             if (((int) result[1]) != 0) {
-                System.out.println(result[0]);
+                stdout(result[0].toString());
                 buildFail("\t-> Failed to generate documentation.");
                 assert false;
             } else {
-                System.out.println("\t-> Documentation generated.");
+                stdout("\t-> Documentation generated.");
             }
         } catch (final IOException ex) {
             buildFail("\t-> Failed to generate documentation.");
@@ -589,7 +603,7 @@ public final class jbp {
     }
 
     private static void analyzeSourceTree() {
-        System.out.println("> Analyzing your source tree...");
+        stdout("> Analyzing your source tree...");
         final File src = new File("src");
         if (!src.exists()) {
             buildFail("\t-> No src directory found. Please create one.");
@@ -629,17 +643,17 @@ public final class jbp {
         }
 
         writeToFile("sources.txt", sbuffer.toString());
-        System.out.printf("\t-> Total of %d source files found.\n", sourceFileCounter);
-        System.out.printf("\t-> Total lines of code are %d (including whitespaces and comments).\n", loc);
+        stdout(String.format("\t-> Total of %d source files found.\n", sourceFileCounter));
+        stdout(String.format("\t-> Total lines of code are %d (including whitespaces and comments).\n", loc));
         if (entryPoint != null) {
             assert numberOfEntryPoints >= 1;
-            System.out.printf("\t-> Entry point is '%s'.\n", entryPoint);
+            stdout(String.format("\t-> Entry point is '%s'.\n", entryPoint));
             if (numberOfEntryPoints > 1) {
-                System.out.printf("\t-> Note that there are more than one entry point in your program.\n");
+                stdout("\t-> Note that there are more than one entry point in your program.\n");
             }
         } else {
             // this is fine because we could have a library which normally does not have an entry point
-            System.out.printf("\t-> No entry point found.\n");
+            stdout("\t-> No entry point found.\n");
             entryPoint = "--NoMainFound--";
         }
     }
@@ -647,15 +661,15 @@ public final class jbp {
     private static void cleanBuildDirectory() {
         final File cwd = new File("build");
         if (!cwd.exists()) {
-            System.out.println("> Creating build directory...");
+            stdout("> Creating build directory...");
             if (cwd.mkdir()) {
-                System.out.println("\t-> Creation successfully.");
+                stdout("\t-> Creation successfully.");
             } else {
                 buildFail("\t-> Failed to create build directory.");
                 assert false;
             }
         } else {
-            System.out.println("> Cleaning build directory...");
+            stdout("> Cleaning build directory...");
 
             int deletionCounter = 0;
 
@@ -677,9 +691,9 @@ public final class jbp {
             // @Todo: Lets delete every directory (except build itself) aswell.
 
             if (deletionCounter == 0)
-                System.out.println("\t-> Nothing to delete.");
+                stdout("\t-> Nothing to delete.");
             else
-                System.out.printf("\t-> Deleted %d files.\n", deletionCounter);
+                stdout(String.format("\t-> Deleted %d files.\n", deletionCounter));
         }
     }
 
@@ -737,6 +751,13 @@ public final class jbp {
                     assert false;
                 }
             }
+            simpleOutput = configMap.get("SimpleOutput");
+            if (simpleOutput != null) { // null would have been fine
+                if (!simpleOutput.equalsIgnoreCase("yes") && !simpleOutput.equalsIgnoreCase("no")) {
+                    buildFail("SimpleOutput can only be set to 'yes' or 'no'.");
+                    assert false;
+                }
+            }
         }
 
         // handle values which have not been set yet
@@ -747,39 +768,45 @@ public final class jbp {
         doc = doc == null ? "no" : doc;
         byteCodeDetails = byteCodeDetails == null ? "yes" : byteCodeDetails;
         runAfterBuild = runAfterBuild == null ? "no" : runAfterBuild;
+        simpleOutput = simpleOutput == null ? "no" : simpleOutput;
     }
 
     public static void main(final String[] args) {
         if (args.length == 0) {
             startNanoTime = System.nanoTime();
             {
-                System.out.println();
                 loadConfiguration();
+                if (simpleOutput.equalsIgnoreCase("Yes")) {
+                    System.out.println("Building project...");
+                    System.out.println();
+                } else {
+                    stdout(null);
+                }
                 cleanBuildDirectory();
-                System.out.println();
+                stdout(null);
                 analyzeSourceTree();
-                System.out.println();
+                stdout(null);
                 if (doc.equalsIgnoreCase("yes")) {
                     generateDocumentation();
-                    System.out.println();
+                    stdout(null);
                 }
                 createClassFiles();
-                System.out.println();
+                stdout(null);
                 if (byteCodeDetails.equalsIgnoreCase("yes")) {
                     createByteCodeFiles();
-                    System.out.println();
+                    stdout(null);
                 }
                 createExecutable();
-                System.out.println();
+                stdout(null);
                 packageRelease();
-                System.out.println();
+                stdout(null);
                 deleteSourcesFiles();
             }
 
             final long elapsedMillis = (System.nanoTime() - startNanoTime) / 1000000;
-            System.out.println();
+            stdout(null);
             System.out.println("BUILD SUCCESSFULL");
-            System.out.println("-----------------");
+            stdout("-----------------");
             System.out.println("TOTAL BUILD TIME : " + elapsedMillis / 1000.0 + " SECONDS");
 
             if (runAfterBuild.equalsIgnoreCase("yes")) {
@@ -799,9 +826,10 @@ public final class jbp {
         } else if (args.length == 1) {
             final String arg = args[0];
             if (arg.equalsIgnoreCase("--version")) {
-                System.out.println("v0.11.0");
+                System.out.println("v0.12.0");
             } else if (arg.equalsIgnoreCase("--help")) {
-                System.out.println("jbp (just build please) is a build tool for java projects.");
+                System.out.println("jbp (just build please) is a build tool for java projects. - Niklas Schultz");
+                System.out.println();
                 System.out.println("Simply execute this file in your root project directory to execute a full build.");
                 System.out.println("In case you wish to change the build configuration, you only need to create a 'jbp.config' file and change them there.");
                 System.out.println();
@@ -813,6 +841,7 @@ public final class jbp {
                 System.out.println("Documentation : No");
                 System.out.println("ByteCodeDetails : Yes");
                 System.out.println("RunAfterBuild : No");
+                System.out.println("SimpleOutput : No");
             } else {
                 System.out.println("Invalid arguments.");
                 System.out.println("Argument can either be '--version' or '--help'");
