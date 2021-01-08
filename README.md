@@ -56,6 +56,7 @@ Documentation : No
 ByteCodeDetails : Yes
 RunAfterBuild : No
 SimpleOutput : No
+Log : No
 ```
 
 | Entry | Default | Description |
@@ -68,6 +69,7 @@ SimpleOutput : No
 | ByteCodeDetails | Yes | Generate human readable bytecode files and print simple stats about them. |
 | RunAfterBuild | No | Run your project after successful build. Note that it will be ran with assertions enabled. |
 | SimpleOutput | No | If set to 'Yes' only print whether build was successful or not (including errors in that case). |
+| Log | No | Writes to a jbp.log file build information. |
 
 When you build time is becoming too slow, I recommend that you turn off 'ByteCodeDetails' and enable 'SimpleOutput'. Also if you know your main class (entry point) it will
 lead to a better build time by specifying it. Another thing you can do is set 'Mode' to 'release' this should decrease build time aswell since debug information is omitted.

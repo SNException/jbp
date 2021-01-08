@@ -1,6 +1,9 @@
 CHANGELOG
 ---------
 
+0.13.0 (08 January 2021)
+- Added 'Log' config entry
+
 0.12.1 (06 January 2021)
 - Slight performance fix by not computing some values when SimpleOutput is set to 'Yes'.
 

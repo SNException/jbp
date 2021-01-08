@@ -24,7 +24,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -44,6 +46,7 @@ public final class jbp {
     private static String byteCodeDetails = null;
     private static String runAfterBuild   = null;
     private static String simpleOutput    = null;
+    private static String log             = null;
 
     // we have a boolean here for performance reason (so we do not have to check the
     // string with equalsIgnoreCase all the time.)
@@ -137,13 +140,17 @@ public final class jbp {
     }
 
     private static void writeToFile(String file, final String data) {
+        writeToFile(file, data, false);
+    }
+
+    private static void writeToFile(String file, final String data, final boolean append) {
         assert file != null;
         assert data != null;
 
         // remove illegal characters, which can occur when having a file which uses generics
         file = file.replace("<", "").replace(">", "");
 
-        try (final OutputStream out = new FileOutputStream(new File(file))) {
+        try (final OutputStream out = new FileOutputStream(new File(file), append)) {
             out.write(data.getBytes(StandardCharsets.UTF_8));
             out.flush();
         } catch (final IOException ex) {
@@ -165,6 +172,29 @@ public final class jbp {
             }
         } catch (final IOException ex) {
             stdout(String.format("Failed to read file %s", file.getName()));
+        }
+    }
+
+    private static void log(final double seconds) {
+        final File logFile = new File("jbp.log");
+        if (!logFile.exists()) {
+            try {
+                if (!logFile.createNewFile()) {
+                    stdout("Failed to create jbp.log file.");
+                    return;
+                }
+            } catch (final IOException ex) {
+                stdout("Failed to create jbp.log file.");
+                return;
+            }
+        }
+
+        final SimpleDateFormat parser = new SimpleDateFormat("DD.MM.yyyy-hh:mm:ss");
+        final String date = parser.format(new Date());
+        if (seconds == -1) { // build has failed
+            writeToFile(logFile.getAbsolutePath(), date + "-> BUILD FAILED\n", true);
+        } else {
+            writeToFile(logFile.getAbsolutePath(), date + "-> BUILD SUCCESSFULL TOOK " + seconds + " SECONDS\n", true);
         }
     }
 
@@ -555,6 +585,9 @@ public final class jbp {
                 // @Hack: We might still have these files
                 new File("sources.txt").delete();
 
+                if (log.equalsIgnoreCase("yes"))
+                    log(-1);
+
                 System.exit(-1);
             } else {
                 try {
@@ -765,6 +798,13 @@ public final class jbp {
                     assert false;
                 }
             }
+            log = configMap.get("Log");
+            if (log != null) { // null would have been fine
+                if (!log.equalsIgnoreCase("yes") && !log.equalsIgnoreCase("no")) {
+                    buildFail("Log can only be set to 'yes' or 'no'.");
+                    assert false;
+                }
+            }
         }
 
         // handle values which have not been set yet
@@ -776,6 +816,7 @@ public final class jbp {
         byteCodeDetails = byteCodeDetails == null ? "yes" : byteCodeDetails;
         runAfterBuild = runAfterBuild == null ? "no" : runAfterBuild;
         simpleOutput = simpleOutput == null ? "no" : simpleOutput;
+        log = log == null ? "no" : log;
 
         simpleOutputBool = simpleOutput.equalsIgnoreCase("Yes");
     }
@@ -818,6 +859,9 @@ public final class jbp {
             stdout("-----------------");
             System.out.println("TOTAL BUILD TIME : " + elapsedMillis / 1000.0 + " SECONDS");
 
+            if (log.equalsIgnoreCase("yes"))
+                log(elapsedMillis / 1000.0);
+
             if (runAfterBuild.equalsIgnoreCase("yes")) {
                 System.out.println();
                 System.out.println();
@@ -835,7 +879,7 @@ public final class jbp {
         } else if (args.length == 1) {
             final String arg = args[0];
             if (arg.equalsIgnoreCase("--version")) {
-                System.out.println("v0.12.1");
+                System.out.println("v0.13.0");
             } else if (arg.equalsIgnoreCase("--help")) {
                 System.out.println("jbp (just build please) is a build tool for java projects. - Niklas Schultz");
                 System.out.println();
@@ -843,6 +887,7 @@ public final class jbp {
                 System.out.println("In case you wish to change the build configuration, you only need to create a 'jbp.config' file and change them there.");
                 System.out.println();
                 System.out.println("Example config file:");
+                System.out.println("--------------------");
                 System.out.println("ProgramName : Program.jar");
                 System.out.println("EntryPoint : ---");
                 System.out.println("Mode : debug");
@@ -851,6 +896,7 @@ public final class jbp {
                 System.out.println("ByteCodeDetails : Yes");
                 System.out.println("RunAfterBuild : No");
                 System.out.println("SimpleOutput : No");
+                System.out.println("Log : No");
             } else {
                 System.out.println("Invalid arguments.");
                 System.out.println("Argument can either be '--version' or '--help'");
