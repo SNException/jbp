@@ -73,7 +73,7 @@ JVM = ---
 | RunAfterBuild | No | Run your project after successful build. Note that it will be ran with assertions enabled. |
 | SimpleOutput | No | If set to 'Yes' only print whether build was successful or not (including errors in that case). |
 | Log | No | Writes to a jbp.log file build information. |
-| Compiler | --- | The path of the compiler executable you wisth to use. Default value means the global one will be used. |
+| Compiler | --- | The path of the compiler executable you wish to use. Default value means the global one will be used. |
 | Bytecodeviewer | --- | The path of the javap executable you wish to use. Default value means the global one will be used.  |
 | JVM | --- | The path of your java executable you wish to use. Default value means the global one will be used. |
 
