@@ -325,7 +325,11 @@ public final class jbp {
 
         String javacVersion = null;
         try {
-            javacVersion = (String) execShellCommand(null, null, false, "javac", "--version")[0];
+            if (compiler.equalsIgnoreCase("---")) {
+                javacVersion = (String) execShellCommand(null, null, false, "javac", "-version")[0];
+            } else {
+                javacVersion = (String) execShellCommand(null, null, false, "\"" + compiler + "\"", "-version")[0];
+            }
         } catch (final IOException ex) {
             javacVersion = "java";
         }
@@ -949,7 +953,7 @@ public final class jbp {
         } else if (args.length == 1) {
             final String arg = args[0];
             if (arg.equalsIgnoreCase("--version")) {
-                System.out.println("v0.14.0");
+                System.out.println("v0.14.1");
             } else if (arg.equalsIgnoreCase("--help")) {
                 System.out.println("jbp (just build please) is a build tool for java projects. - Niklas Schultz");
                 System.out.println();

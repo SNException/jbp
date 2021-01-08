@@ -1,6 +1,9 @@
 CHANGELOG
 ---------
 
+0.14.1 (08 January 2021)
+- Wrong compiler version was writen inside the MANIFEST file.
+
 0.14.0 (08 January 2021)
 - Added 'Compiler', 'Bytecodeviewer' and 'JVM' config entries
 
