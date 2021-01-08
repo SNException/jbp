@@ -1,6 +1,9 @@
 CHANGELOG
 ---------
 
+0.14.0 (08 January 2021)
+- Added 'Compiler', 'Bytecodeviewer' and 'JVM' config entries
+
 0.13.0 (08 January 2021)
 - Added 'Log' config entry
 

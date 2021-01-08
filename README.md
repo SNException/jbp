@@ -48,15 +48,18 @@ and change them in there.
 
 Example jbp.config (which represents the default build config):
 ```
-ProgramName : Program.jar
-EntryPoint : ---
-Mode : debug
-Encoding : UTF-8
-Documentation : No
-ByteCodeDetails : Yes
-RunAfterBuild : No
-SimpleOutput : No
-Log : No
+ProgramName = Program.jar
+EntryPoint = ---
+Mode = debug
+Encoding = UTF-8
+Documentation = No
+ByteCodeDetails = Yes
+RunAfterBuild = No
+SimpleOutput = No
+Log = No
+Compiler = ---
+BytecodeViewer = ---
+JVM = ---
 ```
 
 | Entry | Default | Description |
@@ -70,6 +73,9 @@ Log : No
 | RunAfterBuild | No | Run your project after successful build. Note that it will be ran with assertions enabled. |
 | SimpleOutput | No | If set to 'Yes' only print whether build was successful or not (including errors in that case). |
 | Log | No | Writes to a jbp.log file build information. |
+| Compiler | --- | The path of the compiler executable you wisth to use. Default value means the global one will be used. |
+| BytecodeViewer | --- | The path of the javap executable you wish to use. Default value means the global one will be used.  |
+| JVM | --- | The path of your java executable you wish to use. Default value means the global one will be used. |
 
 When you build time is becoming too slow, I recommend that you turn off 'ByteCodeDetails' and enable 'SimpleOutput'. Also if you know your main class (entry point) it will
 lead to a better build time by specifying it. Another thing you can do is set 'Mode' to 'release' this should decrease build time aswell since debug information is omitted.
@@ -77,7 +83,7 @@ Finally you can create a .bat file (e.g build.bat) to fiddle around with JVM arg
 Example:
 ```
 @echo off
-java -XX:CICompilerCount=1 -XX:TieredStopAtLevel=1 -XX:+UseSerialGC -Xmx64m jbp
+java -XX:CICompilerCount=1 -XX:TieredStopAtLevel=1 -XX:+TieredCompilation -XX:+UseSerialGC -Xmx64m jbp
 ```
 
 ## License

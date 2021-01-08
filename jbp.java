@@ -47,6 +47,9 @@ public final class jbp {
     private static String runAfterBuild   = null;
     private static String simpleOutput    = null;
     private static String log             = null;
+    private static String compiler        = null;
+    private static String bytecodeViewer  = null;
+    private static String jvm             = null;
 
     // we have a boolean here for performance reason (so we do not have to check the
     // string with equalsIgnoreCase all the time.)
@@ -443,7 +446,16 @@ public final class jbp {
             assert classes != null;
 
             final List<String> sclasses = new ArrayList<>(classes.length);
-            sclasses.add("javap");
+            if (bytecodeViewer.equalsIgnoreCase("---")) {
+                sclasses.add("javap");
+            } else {
+                if (new File(bytecodeViewer).exists()) {
+                    sclasses.add(bytecodeViewer);
+                } else {
+                    buildFail("Specified bytecode viewer executable does not exist.");
+                    assert false;
+                }
+            }
             sclasses.add("-c");
             sclasses.add("-p");
             for (final File file : classes) {
@@ -565,10 +577,30 @@ public final class jbp {
                 } else {
                     assert false;
                 }
-                if (classpath.toString().isEmpty()) // we have NO libraries
-                    result = execShellCommand(null, null, false, "javac", "@sources.txt", "-Xdiags:verbose", "-Xlint:deprecation", "-Xmaxerrs", "5", "-nowarn", debugFlag, "-d", "build/classes", "-encoding", encoding);
-                else // we have libraries; need to specify classpath now
-                    result = execShellCommand(null, null, false, "javac", "-classpath", classpath.toString(), "@sources.txt", "-Xdiags:verbose", "-Xlint:deprecation", "-Xmaxerrs", "5", "-nowarn", debugFlag, "-d", "build/classes", "-encoding", encoding);
+                if (classpath.toString().isEmpty()) { // we have NO libraries
+                    if (compiler.equalsIgnoreCase("---")) {
+                        result = execShellCommand(null, null, false, "javac", "@sources.txt", "-Xdiags:verbose", "-Xlint:deprecation", "-Xmaxerrs", "5", "-nowarn", debugFlag, "-d", "build/classes", "-encoding", encoding);
+                    } else {
+                        final File compilerExecutable = new File(compiler);
+                        if (!compilerExecutable.exists()) {
+                            buildFail("\t-> Specified compiler executable does not exist.");
+                            assert false;
+                        } else {
+                            result = execShellCommand(null, null, false, compiler, "@sources.txt", "-Xdiags:verbose", "-Xlint:deprecation", "-Xmaxerrs", "5", "-nowarn", debugFlag, "-d", "build/classes", "-encoding", encoding);
+                        }
+                    }
+                } else { // we have libraries; need to specify classpath now
+                    if (compiler.equalsIgnoreCase("---")) {
+                        final File compilerExecutable = new File(compiler);
+                        if (!compilerExecutable.exists()) {
+                            buildFail("\t-> Specified compiler executable does not exist.");
+                            assert false;
+                        }
+                        result = execShellCommand(null, null, false, "javac", "-classpath", classpath.toString(), "@sources.txt", "-Xdiags:verbose", "-Xlint:deprecation", "-Xmaxerrs", "5", "-nowarn", debugFlag, "-d", "build/classes", "-encoding", encoding);
+                    } else {
+                        result = execShellCommand(null, null, false, compiler, "-classpath", classpath.toString(), "@sources.txt", "-Xdiags:verbose", "-Xlint:deprecation", "-Xmaxerrs", "5", "-nowarn", debugFlag, "-d", "build/classes", "-encoding", encoding);
+                    }
+                }
             }
             assert result != null;
 
@@ -748,7 +780,7 @@ public final class jbp {
                 if (configLine.strip().isEmpty())
                     continue;
 
-                final String[] entry = configLine.strip().split(":");
+                final String[] entry = configLine.strip().split("=");
                 if (entry.length != 2) {
                     buildFail("Invalid config file entry."); // @Todo: Improve error message
                     assert false;
@@ -805,6 +837,9 @@ public final class jbp {
                     assert false;
                 }
             }
+            compiler = configMap.get("Compiler");
+            bytecodeViewer = configMap.get("Bytecodeviewer");
+            jvm = configMap.get("JVM");
         }
 
         // handle values which have not been set yet
@@ -817,6 +852,15 @@ public final class jbp {
         runAfterBuild = runAfterBuild == null ? "no" : runAfterBuild;
         simpleOutput = simpleOutput == null ? "no" : simpleOutput;
         log = log == null ? "no" : log;
+        compiler = compiler == null || compiler.equalsIgnoreCase("---") ? null : compiler;
+        if (compiler == null)
+            compiler = "---";
+        bytecodeViewer = bytecodeViewer == null || bytecodeViewer.equalsIgnoreCase("---") ? null : bytecodeViewer;
+        if (bytecodeViewer == null)
+            bytecodeViewer = "---";
+        jvm = jvm == null || jvm.equalsIgnoreCase("---") ? null : jvm;
+        if (jvm == null)
+            jvm = "---";
 
         simpleOutputBool = simpleOutput.equalsIgnoreCase("Yes");
     }
@@ -826,6 +870,16 @@ public final class jbp {
             startNanoTime = System.nanoTime();
             {
                 loadConfiguration();
+                if (compiler.equalsIgnoreCase("---")) {
+                    System.out.println("Using your global compiler executable.");
+                } else {
+                    System.out.println("Using following javac executable: " + compiler);
+                }
+                if (bytecodeViewer.equalsIgnoreCase("---")) {
+                    System.out.println("Using your global bytecode viewer executable.");
+                } else {
+                    System.out.println("Using following javap executable: " + bytecodeViewer);
+                }
                 if (simpleOutputBool) {
                     System.out.println("Building project...");
                     System.out.println();
@@ -866,10 +920,26 @@ public final class jbp {
                 System.out.println();
                 System.out.println();
                 System.out.println("Running your program after the build...");
+                if (jvm.equalsIgnoreCase("---")) {
+                    System.out.println("Using your global JVM executable.");
+                } else {
+                    System.out.println("Using the following JVM executable: " + jvm);
+                }
                 System.out.println("----------");
                 try {
                     // @Incomplete: We do not yet enable reacting to input requests via stdout from the started process (e.g java.util.Scanner)
-                    final Object[] result = execShellCommand(null, new File("build/release"), true, "java", "-ea", "-jar", programName);
+                    Object[] result = null;
+                    if (jvm.equalsIgnoreCase("---")) {
+                        result = execShellCommand(null, new File("build/release"), true, "java", "-ea", "-jar", programName);
+                    } else {
+                        if (new File(jvm).exists()) {
+                            result = execShellCommand(null, new File("build/release"), true, jvm, "-ea", "-jar", programName);
+                        } else {
+                            buildFail("Specified jvm executable does not exist.");
+                            assert false;
+                        }
+                    }
+                    assert result != null;
                     if ((int) result[1] != 0)
                         System.out.println("Failed to run your program.");
                 } catch (final IOException ex) {
@@ -879,7 +949,7 @@ public final class jbp {
         } else if (args.length == 1) {
             final String arg = args[0];
             if (arg.equalsIgnoreCase("--version")) {
-                System.out.println("v0.13.0");
+                System.out.println("v0.14.0");
             } else if (arg.equalsIgnoreCase("--help")) {
                 System.out.println("jbp (just build please) is a build tool for java projects. - Niklas Schultz");
                 System.out.println();
@@ -888,15 +958,18 @@ public final class jbp {
                 System.out.println();
                 System.out.println("Example config file:");
                 System.out.println("--------------------");
-                System.out.println("ProgramName : Program.jar");
-                System.out.println("EntryPoint : ---");
-                System.out.println("Mode : debug");
-                System.out.println("Encoding : UTF-8");
-                System.out.println("Documentation : No");
-                System.out.println("ByteCodeDetails : Yes");
-                System.out.println("RunAfterBuild : No");
-                System.out.println("SimpleOutput : No");
-                System.out.println("Log : No");
+                System.out.println("ProgramName = Program.jar");
+                System.out.println("EntryPoint = ---");
+                System.out.println("Mode = debug");
+                System.out.println("Encoding = UTF-8");
+                System.out.println("Documentation = No");
+                System.out.println("ByteCodeDetails = Yes");
+                System.out.println("RunAfterBuild = No");
+                System.out.println("SimpleOutput = No");
+                System.out.println("Log = No");
+                System.out.println("Compiler = ---");
+                System.out.println("Bytecodeviewer = ---");
+                System.out.println("JVM = ---");
             } else {
                 System.out.println("Invalid arguments.");
                 System.out.println("Argument can either be '--version' or '--help'");
