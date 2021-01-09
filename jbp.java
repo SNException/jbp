@@ -89,7 +89,7 @@ public final class jbp {
     private static void buildFail(final String reason) {
         assert reason != null;
 
-        // @Hack: We might still have this file. Maybe using file.deleteOnExit() would be more appropriate?
+        // TODO: We might still have this file. Maybe using file.deleteOnExit() would be more appropriate?
         new File("sources.txt").delete();
 
         System.out.println(reason);
@@ -261,7 +261,6 @@ public final class jbp {
             }
         }
 
-        // @Robustness:
         new File("build/Manifest.txt").delete();
         new File("build/" + programName).delete();
 
@@ -298,7 +297,7 @@ public final class jbp {
             stdout(String.format("\t-> The full size of your release is %.3f %s\n", sizeOfReleaseInBytes / 1024.0f, "kb."));
         } catch (final IOException ex) {
             System.out.println("\t -> Failed to calculate size of your release.");
-            // lets not failed the entire build though, that seems dumb.
+            // lets not fail the entire build though, that seems dumb.
         }
     }
 
@@ -369,7 +368,7 @@ public final class jbp {
             }
             args.add("cfme");
             args.add("../" + programName);  // gets moved to release later
-            args.add("../Manifest.txt"); // gets deleted later
+            args.add("../Manifest.txt");    // gets deleted later
 
             // find out entry point
             if (entryPoint.equals("--NoMainFound--")) {
@@ -398,7 +397,7 @@ public final class jbp {
             }
 
             try {
-                // @Todo: Check result in case of error
+                // TODO: Check result in case of error
                 stdout("\t-> Java packages are used.");
                 execShellCommand(null, new File("build/classes"), false, (String[]) args.toArray(String[]::new));
             } catch (final IOException ex) {
@@ -407,7 +406,7 @@ public final class jbp {
             }
         } else {
             try {
-                // @Todo: Check result in case of error
+                // TODO: Check result in case of error
                 stdout("\t-> No java packages are used.");
                 if (jar.equalsIgnoreCase("---")) {
                     execShellCommand(null, new File("build/classes"), false, "jar", "cfme", "../" + programName, "../Manifest.txt", entryPoint, "*.class");
@@ -429,7 +428,6 @@ public final class jbp {
         stdout(String.format("\t-> Size of executable is %.3f %s\n", program.length() / 1024.0f, "kb."));
     }
 
-    // @Robustness
     private static void createByteCodeFiles() {
         stdout("> Generating readable bytecode files for easier debugging...");
 
@@ -577,11 +575,12 @@ public final class jbp {
 
             // For now we print a maximum number of 5 errors (-Xmaxerrs 5)
             // We also disable warning (-nowarn) because they are hardly every useful (execpt deprecated warnings)
-            // @Todo: We only get warnings about deprecation displayed iff also at the same time
+
+            // TODO: We only get warnings about deprecation displayed iff also at the same time
             // encounter an (or multiple) compilation errors. Otherwise warnings will not get shown
             // to the user. This is not what we want, I think.
             {
-                // @Todo: There seems to be javax.tool.JavaCompiler class which can do the compile while giving me more control (we can format nice error message more easily)
+                // TODO: There seems to be javax.tool.JavaCompiler class which can do the compile while giving me more control (we can format nice error message more easily)
                 // Check whether we can use that instead of relying on javac in the path.
                 String debugFlag = null;
                 if (mode.equalsIgnoreCase("debug")) {
@@ -628,7 +627,7 @@ public final class jbp {
                 System.out.println("############################");
                 System.out.println("BUILD FAILED");
 
-                // @Hack: We might still have these files
+                // TODO: We might still have these files. However this soulution is rather hacky.
                 new File("sources.txt").delete();
 
                 if (log.equalsIgnoreCase("yes"))
@@ -780,7 +779,7 @@ public final class jbp {
                     deletionCounter += 1;
             }
 
-            // @Todo: Lets delete every directory (except build itself) aswell.
+            // TODO: Lets delete every directory (except build itself) aswell.
 
             if (deletionCounter == 0)
                 stdout("\t-> Nothing to delete.");
@@ -802,7 +801,7 @@ public final class jbp {
 
                 final String[] entry = configLine.strip().split("=");
                 if (entry.length != 2) {
-                    buildFail("Invalid config file entry."); // @Todo: Improve error message
+                    buildFail("Invalid config file entry."); // TODO: Improve error message
                     assert false;
                 }
 
@@ -967,7 +966,7 @@ public final class jbp {
                 System.out.println("Running your program after the build...");
                 System.out.println("----------");
                 try {
-                    // @Incomplete: We do not yet enable reacting to input requests via stdout from the started process (e.g java.util.Scanner)
+                    // TODO: We do not yet enable reacting to input requests via stdout from the started process (e.g java.util.Scanner)
                     Object[] result = null;
                     if (jvm.equalsIgnoreCase("---")) {
                         result = execShellCommand(null, new File("build/release"), true, "java", "-ea", "-jar", programName);
