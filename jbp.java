@@ -50,6 +50,7 @@ public final class jbp {
     private static String compiler        = null;
     private static String bytecodeViewer  = null;
     private static String jvm             = null;
+    private static String jar             = null;
 
     // we have a boolean here for performance reason (so we do not have to check the
     // string with equalsIgnoreCase all the time.)
@@ -360,7 +361,11 @@ public final class jbp {
             assert classes != null;
 
             final List<String> args = new ArrayList<>(classes.length);
-            args.add("jar");
+            if (jar.equalsIgnoreCase("---")) {
+                args.add("jar");
+            } else {
+                args.add("\"" + jar + "\"");
+            }
             args.add("cfme");
             args.add("../" + programName);  // gets moved to release later
             args.add("../Manifest.txt"); // gets deleted later
@@ -403,7 +408,7 @@ public final class jbp {
             try {
                 // @Todo: Check result in case of error
                 stdout("\t-> No java packages are used.");
-                execShellCommand(null, new File("build/classes"), false, "jar", "cfme", "../" + programName, "../Manifest.txt", entryPoint, "*.class");
+                execShellCommand(null, new File("build/classes"), false, "\"" + jar + "\"", "cfme", "../" + programName, "../Manifest.txt", entryPoint, "*.class");
             } catch (final IOException ex) {
                buildFail("->\t Failed to create executable.");
                assert false;
@@ -844,6 +849,7 @@ public final class jbp {
             compiler = configMap.get("Compiler");
             bytecodeViewer = configMap.get("Bytecodeviewer");
             jvm = configMap.get("JVM");
+            jar = configMap.get("Jar");
         }
 
         // handle values which have not been set yet
@@ -865,6 +871,9 @@ public final class jbp {
         jvm = jvm == null || jvm.equalsIgnoreCase("---") ? null : jvm;
         if (jvm == null)
             jvm = "---";
+        jar = jar == null || jar.equalsIgnoreCase("---") ? null : jar;
+        if (jar == null)
+            jar = "---";
 
         simpleOutputBool = simpleOutput.equalsIgnoreCase("Yes");
     }
@@ -883,6 +892,11 @@ public final class jbp {
                     System.out.println("Using your global bytecode viewer executable.");
                 } else {
                     System.out.println("Using following javap executable: " + bytecodeViewer);
+                }
+                if (jar.equalsIgnoreCase("---")) {
+                    System.out.println("Using your global jar executable.");
+                } else {
+                    System.out.println("Using following jar executable: " + jar);
                 }
                 if (simpleOutputBool) {
                     System.out.println("Building project...");
@@ -953,7 +967,7 @@ public final class jbp {
         } else if (args.length == 1) {
             final String arg = args[0];
             if (arg.equalsIgnoreCase("--version")) {
-                System.out.println("v0.14.1");
+                System.out.println("v0.15.0");
             } else if (arg.equalsIgnoreCase("--help")) {
                 System.out.println("jbp (just build please) is a build tool for java projects. - Niklas Schultz");
                 System.out.println();
@@ -974,6 +988,7 @@ public final class jbp {
                 System.out.println("Compiler = ---");
                 System.out.println("Bytecodeviewer = ---");
                 System.out.println("JVM = ---");
+                System.out.println("Jar = ---");
             } else {
                 System.out.println("Invalid arguments.");
                 System.out.println("Argument can either be '--version' or '--help'");

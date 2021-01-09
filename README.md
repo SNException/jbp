@@ -60,6 +60,7 @@ Log = No
 Compiler = ---
 Bytecodeviewer = ---
 JVM = ---
+Jar = ---
 ```
 
 | Entry | Default | Description |
@@ -76,6 +77,7 @@ JVM = ---
 | Compiler | --- | The path of the compiler executable you wish to use. Default value means the global one will be used. |
 | Bytecodeviewer | --- | The path of the javap executable you wish to use. Default value means the global one will be used.  |
 | JVM | --- | The path of your java executable you wish to use. Default value means the global one will be used. |
+| Jar | --- | The path of your jar executable you wish to use. Default value means the global one will be used. |
 
 When you build time is becoming too slow, I recommend that you turn off 'ByteCodeDetails' and enable 'SimpleOutput'. Also if you know your main class (entry point) it will
 lead to a better build time by specifying it. Another thing you can do is set 'Mode' to 'release' this should decrease build time aswell since debug information is omitted.
