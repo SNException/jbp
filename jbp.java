@@ -409,7 +409,11 @@ public final class jbp {
             try {
                 // @Todo: Check result in case of error
                 stdout("\t-> No java packages are used.");
-                execShellCommand(null, new File("build/classes"), false, "\"" + jar + "\"", "cfme", "../" + programName, "../Manifest.txt", entryPoint, "*.class");
+                if (jar.equalsIgnoreCase("---")) {
+                    execShellCommand(null, new File("build/classes"), false, "jar", "cfme", "../" + programName, "../Manifest.txt", entryPoint, "*.class");
+                } else {
+                    execShellCommand(null, new File("build/classes"), false, "\"" + jar + "\"", "cfme", "../" + programName, "../Manifest.txt", entryPoint, "*.class");
+                }
             } catch (final IOException ex) {
                buildFail("->\t Failed to create executable.");
                assert false;
@@ -983,7 +987,7 @@ public final class jbp {
         } else if (args.length == 1) {
             final String arg = args[0];
             if (arg.equalsIgnoreCase("--version")) {
-                System.out.println("v0.16.0");
+                System.out.println("v0.16.1");
             } else if (arg.equalsIgnoreCase("--help")) {
                 System.out.println("jbp (just build please) is a build tool for java projects. - Niklas Schultz");
                 System.out.println();

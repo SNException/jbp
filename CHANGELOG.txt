@@ -1,6 +1,9 @@
 CHANGELOG
 ---------
 
+0.16.1 (9 January 2021)
+- Bugfix: jar executable was called incorectly.
+
 0.16.0 (9 January 2021)
 - Added 'javadoc' config entry.
 - Bugfix: java executable path broke when it contained whitespaces
