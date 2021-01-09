@@ -51,6 +51,7 @@ public final class jbp {
     private static String bytecodeViewer  = null;
     private static String jvm             = null;
     private static String jar             = null;
+    private static String javadoc         = null;
 
     // we have a boolean here for performance reason (so we do not have to check the
     // string with equalsIgnoreCase all the time.)
@@ -459,7 +460,7 @@ public final class jbp {
                 sclasses.add("javap");
             } else {
                 if (new File(bytecodeViewer).exists()) {
-                    sclasses.add(bytecodeViewer);
+                    sclasses.add("\"" + bytecodeViewer + "\"");
                 } else {
                     buildFail("Specified bytecode viewer executable does not exist.");
                     assert false;
@@ -666,7 +667,13 @@ public final class jbp {
             }
         }
         try {
-            final Object[] result = execShellCommand(null, null, false, "javadoc", "@sources.txt", "-d", "build/documentation");
+            Object[] result = null;
+            if (javadoc.equalsIgnoreCase("---")) {
+                result = execShellCommand(null, null, false, "javadoc", "@sources.txt", "-d", "build/documentation");
+            } else {
+                result = execShellCommand(null, null, false, "\"" + javadoc + "\"", "@sources.txt", "-d", "build/documentation");
+            }
+            assert result != null;
             if (((int) result[1]) != 0) {
                 stdout(result[0].toString());
                 buildFail("\t-> Failed to generate documentation.");
@@ -850,6 +857,7 @@ public final class jbp {
             bytecodeViewer = configMap.get("Bytecodeviewer");
             jvm = configMap.get("JVM");
             jar = configMap.get("Jar");
+            javadoc = configMap.get("Javadoc");
         }
 
         // handle values which have not been set yet
@@ -874,6 +882,9 @@ public final class jbp {
         jar = jar == null || jar.equalsIgnoreCase("---") ? null : jar;
         if (jar == null)
             jar = "---";
+        javadoc = javadoc == null || javadoc.equalsIgnoreCase("---") ? null : javadoc;
+        if (javadoc == null)
+            javadoc = "---";
 
         simpleOutputBool = simpleOutput.equalsIgnoreCase("Yes");
     }
@@ -897,6 +908,16 @@ public final class jbp {
                     System.out.println("Using your global jar executable.");
                 } else {
                     System.out.println("Using following jar executable: " + jar);
+                }
+                if (jvm.equalsIgnoreCase("---")) {
+                    System.out.println("Using your global JVM executable.");
+                } else {
+                    System.out.println("Using the following JVM executable: " + jvm);
+                }
+                if (javadoc.equalsIgnoreCase("---")) {
+                    System.out.println("Using your global javadoc executable.");
+                } else {
+                    System.out.println("Using following javadoc executable: " + javadoc);
                 }
                 if (simpleOutputBool) {
                     System.out.println("Building project...");
@@ -938,11 +959,6 @@ public final class jbp {
                 System.out.println();
                 System.out.println();
                 System.out.println("Running your program after the build...");
-                if (jvm.equalsIgnoreCase("---")) {
-                    System.out.println("Using your global JVM executable.");
-                } else {
-                    System.out.println("Using the following JVM executable: " + jvm);
-                }
                 System.out.println("----------");
                 try {
                     // @Incomplete: We do not yet enable reacting to input requests via stdout from the started process (e.g java.util.Scanner)
@@ -951,7 +967,7 @@ public final class jbp {
                         result = execShellCommand(null, new File("build/release"), true, "java", "-ea", "-jar", programName);
                     } else {
                         if (new File(jvm).exists()) {
-                            result = execShellCommand(null, new File("build/release"), true, jvm, "-ea", "-jar", programName);
+                            result = execShellCommand(null, new File("build/release"), true, "\"" + jvm + "\"", "-ea", "-jar", programName);
                         } else {
                             buildFail("Specified jvm executable does not exist.");
                             assert false;
@@ -989,6 +1005,7 @@ public final class jbp {
                 System.out.println("Bytecodeviewer = ---");
                 System.out.println("JVM = ---");
                 System.out.println("Jar = ---");
+                System.out.println("Javadoc = ---");
             } else {
                 System.out.println("Invalid arguments.");
                 System.out.println("Argument can either be '--version' or '--help'");

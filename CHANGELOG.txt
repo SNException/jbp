@@ -1,6 +1,10 @@
 CHANGELOG
 ---------
 
+0.16.0 (9 January 2021)
+- Added 'javadoc' config entry.
+- Bugfix: java executable path broke when it contained whitespaces
+
 0.15.0 (9 January 2021)
 - Added 'jar' config entry.
 
