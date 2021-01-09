@@ -898,30 +898,32 @@ public final class jbp {
             startNanoTime = System.nanoTime();
             {
                 loadConfiguration();
-                if (compiler.equalsIgnoreCase("---")) {
-                    System.out.println("Using your global compiler executable.");
-                } else {
-                    System.out.println("Using following javac executable: " + compiler);
-                }
-                if (bytecodeViewer.equalsIgnoreCase("---")) {
-                    System.out.println("Using your global bytecode viewer executable.");
-                } else {
-                    System.out.println("Using following javap executable: " + bytecodeViewer);
-                }
-                if (jar.equalsIgnoreCase("---")) {
-                    System.out.println("Using your global jar executable.");
-                } else {
-                    System.out.println("Using following jar executable: " + jar);
-                }
-                if (jvm.equalsIgnoreCase("---")) {
-                    System.out.println("Using your global JVM executable.");
-                } else {
-                    System.out.println("Using the following JVM executable: " + jvm);
-                }
-                if (javadoc.equalsIgnoreCase("---")) {
-                    System.out.println("Using your global javadoc executable.");
-                } else {
-                    System.out.println("Using following javadoc executable: " + javadoc);
+                if (!simpleOutputBool) {
+                    if (compiler.equalsIgnoreCase("---")) {
+                        System.out.println("Using your global compiler executable.");
+                    } else {
+                        System.out.println("Using following javac executable: " + compiler);
+                    }
+                    if (bytecodeViewer.equalsIgnoreCase("---")) {
+                        System.out.println("Using your global bytecode viewer executable.");
+                    } else {
+                        System.out.println("Using following javap executable: " + bytecodeViewer);
+                    }
+                    if (jar.equalsIgnoreCase("---")) {
+                        System.out.println("Using your global jar executable.");
+                    } else {
+                        System.out.println("Using following jar executable: " + jar);
+                    }
+                    if (jvm.equalsIgnoreCase("---")) {
+                        System.out.println("Using your global JVM executable.");
+                    } else {
+                        System.out.println("Using the following JVM executable: " + jvm);
+                    }
+                    if (javadoc.equalsIgnoreCase("---")) {
+                        System.out.println("Using your global javadoc executable.");
+                    } else {
+                        System.out.println("Using following javadoc executable: " + javadoc);
+                    }
                 }
                 if (simpleOutputBool) {
                     System.out.println("Building project...");
@@ -987,7 +989,7 @@ public final class jbp {
         } else if (args.length == 1) {
             final String arg = args[0];
             if (arg.equalsIgnoreCase("--version")) {
-                System.out.println("v0.16.1");
+                System.out.println("v0.17.0");
             } else if (arg.equalsIgnoreCase("--help")) {
                 System.out.println("jbp (just build please) is a build tool for java projects. - Niklas Schultz");
                 System.out.println();
