@@ -53,8 +53,8 @@ public final class jbp {
     private static String jar             = null;
     private static String javadoc         = null;
 
-    // we have a boolean here for performance reason (so we do not have to check the
-    // string with equalsIgnoreCase all the time.)
+    // We have a boolean here for performance reasons. Otherwise we would
+    // have to check the string with 'equalsIgnoreCase()' all the time.
     private static boolean simpleOutputBool = false;
 
     private static void stdout(final String str) {
@@ -89,7 +89,8 @@ public final class jbp {
     private static void buildFail(final String reason) {
         assert reason != null;
 
-        // TODO: We might still have this file. Maybe using file.deleteOnExit() would be more appropriate?
+        // TODO(nschultz): We might still have this file.
+        // Maybe using file.deleteOnExit() would be more appropriate?
         new File("sources.txt").delete();
 
         System.out.println(reason);
@@ -152,7 +153,7 @@ public final class jbp {
         assert file != null;
         assert data != null;
 
-        // remove illegal characters, which can occur when having a file which uses generics
+        // Remove illegal characters, which can occur when having a file which uses generics
         file = file.replace("<", "").replace(">", "");
 
         try (final OutputStream out = new FileOutputStream(new File(file), append)) {
@@ -196,7 +197,7 @@ public final class jbp {
 
         final SimpleDateFormat parser = new SimpleDateFormat("DD.MM.yyyy-hh:mm:ss");
         final String date = parser.format(new Date());
-        if (seconds == -1) { // build has failed
+        if (seconds == -1) { // The build has failed if we get '-1'.
             writeToFile(logFile.getAbsolutePath(), date + "-> BUILD FAILED\n", true);
         } else {
             writeToFile(logFile.getAbsolutePath(), date + "-> BUILD SUCCESSFULL TOOK " + seconds + " SECONDS\n", true);
@@ -264,7 +265,7 @@ public final class jbp {
         new File("build/Manifest.txt").delete();
         new File("build/" + programName).delete();
 
-        // resource handling @Incomplete: Directory structure will not get copied!!!!!!
+        // TODO(nschultz): Directory structure will not get copied for 'res' directory.
         final File res = new File("res");
 
         if (res.exists()) {
@@ -397,7 +398,7 @@ public final class jbp {
             }
 
             try {
-                // TODO: Check result in case of error
+                // TODO(nschultz): Check result in case of error
                 stdout("\t-> Java packages are used.");
                 execShellCommand(null, new File("build/classes"), false, (String[]) args.toArray(String[]::new));
             } catch (final IOException ex) {
@@ -406,7 +407,7 @@ public final class jbp {
             }
         } else {
             try {
-                // TODO: Check result in case of error
+                // TODO(nschultz): Check result in case of error
                 stdout("\t-> No java packages are used.");
                 if (jar.equalsIgnoreCase("---")) {
                     execShellCommand(null, new File("build/classes"), false, "jar", "cfme", "../" + programName, "../Manifest.txt", entryPoint, "*.class");
@@ -481,7 +482,7 @@ public final class jbp {
                 final String[] lines = ((String) result[0]).split(System.lineSeparator());
                 for (int i = 0, l = lines.length; i < l; ++i) {
                     final String line = lines[i];
-                    if (line.contains(":") && !line.equalsIgnoreCase("Code") && !line.equalsIgnoreCase("table")) { // @Robustness
+                    if (line.contains(":") && !line.equalsIgnoreCase("Code") && !line.equalsIgnoreCase("table")) {
                         numberOfByteCodeInstructions += 1;
                         final String stripedLine = line.strip();
                         if (!stripedLine.contains("Code:")) {
@@ -576,11 +577,11 @@ public final class jbp {
             // For now we print a maximum number of 5 errors (-Xmaxerrs 5)
             // We also disable warning (-nowarn) because they are hardly every useful (execpt deprecated warnings)
 
-            // TODO: We only get warnings about deprecation displayed iff also at the same time
+            // TODO(nschultz): We only get warnings about deprecation displayed iff also at the same time
             // encounter an (or multiple) compilation errors. Otherwise warnings will not get shown
             // to the user. This is not what we want, I think.
             {
-                // TODO: There seems to be javax.tool.JavaCompiler class which can do the compile while giving me more control (we can format nice error message more easily)
+                // TODO(nschultz): There seems to be javax.tool.JavaCompiler class which can do the compile while giving me more control (we can format nice error message more easily)
                 // Check whether we can use that instead of relying on javac in the path.
                 String debugFlag = null;
                 if (mode.equalsIgnoreCase("debug")) {
@@ -627,7 +628,7 @@ public final class jbp {
                 System.out.println("############################");
                 System.out.println("BUILD FAILED");
 
-                // TODO: We might still have these files. However this soulution is rather hacky.
+                // TODO(nschultz): We might still have these files. However this soulution is rather hacky.
                 new File("sources.txt").delete();
 
                 if (log.equalsIgnoreCase("yes"))
@@ -722,7 +723,7 @@ public final class jbp {
             final StringBuilder locBuffer = new StringBuilder(1024);
             readFileIntoMemory(locBuffer, file);
             if (entryPoint == null) {
-                if (locBuffer.toString().contains("public static void main(")) { // @Robustness
+                if (locBuffer.toString().contains("public static void main(")) {
                     entryPoint = file.getName().split("\\.")[0];
                     numberOfEntryPoints += 1;
                 }
@@ -779,7 +780,7 @@ public final class jbp {
                     deletionCounter += 1;
             }
 
-            // TODO: Lets delete every directory (except build itself) aswell.
+            // TODO(nschultz): Lets delete every directory (except build itself) aswell.
 
             if (deletionCounter == 0)
                 stdout("\t-> Nothing to delete.");
@@ -801,7 +802,7 @@ public final class jbp {
 
                 final String[] entry = configLine.strip().split("=");
                 if (entry.length != 2) {
-                    buildFail("Invalid config file entry."); // TODO: Improve error message
+                    buildFail("Invalid config file entry."); // TODO(nschultz): Improve error message
                     assert false;
                 }
 
@@ -966,7 +967,7 @@ public final class jbp {
                 System.out.println("Running your program after the build...");
                 System.out.println("----------");
                 try {
-                    // TODO: We do not yet enable reacting to input requests via stdout from the started process (e.g java.util.Scanner)
+                    // TODO(nschultz): We do not yet enable reacting to input requests via stdout from the started process (e.g java.util.Scanner)
                     Object[] result = null;
                     if (jvm.equalsIgnoreCase("---")) {
                         result = execShellCommand(null, new File("build/release"), true, "java", "-ea", "-jar", programName);
