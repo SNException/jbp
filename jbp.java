@@ -379,7 +379,7 @@ public final class jbp {
                 for (int i = 0, l = classes.length; i < l; ++i) {
                     final File file = classes[i];
                     if (!file.isDirectory()) {
-                        if (file.getName().split("//.")[0].equals(entryPoint + ".class")) // @Hack
+                        if (file.getName().split("//.")[0].equals(entryPoint + ".class"))
                             entryPointFile = file;
                     }
                 }
