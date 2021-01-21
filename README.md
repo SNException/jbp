@@ -87,7 +87,7 @@ Finally you can create a .bat file (e.g build.bat) to fiddle around with JVM arg
 Example:
 ```
 @echo off
-java -XX:CICompilerCount=1 -XX:TieredStopAtLevel=1 -XX:+TieredCompilation -XX:+UseSerialGC -Xmx64m jbp
+java -XX:CICompilerCount=1 -XX:TieredStopAtLevel=1 -XX:+TieredCompilation -XX:+UseSerialGC -Xmx2048m jbp
 ```
 
 ## License
